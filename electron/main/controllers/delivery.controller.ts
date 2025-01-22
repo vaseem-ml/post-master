@@ -1,4 +1,3 @@
-import { uniq } from 'lodash';
 import { model, Schema } from 'mongoose';
 
 const deliverySchema = new Schema(

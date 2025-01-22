@@ -439,7 +439,34 @@ ipcMain.on("getMasterData", async (event, filter) => {
 ipcMain.on("getDeliveryData", async (event, filter) => {
   console.log("get delivery data called");
   console.log(filter);
+  let sort = filter.sort ? filter.sort : { createdAt: -1 };
+  switch (filter.sortKey) {
+    case "book_ofc":
+      sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 };
+      break;
+    case "event_date":
+      sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 };
+      break;
+    case "status":
+      sort = { "status": filter.sortType === "ASC" ? 1 : -1 };
+      break;
+  }
   let cond = {};
+  if (filter.startDate) {
+    Object.assign(cond, {
+      $and: [
+        {
+          "event_date": { $gte: new Date(filter.startDate) }
+        },
+        {
+          "event_date": { $lte: new Date(filter.endDate) }
+        }
+      ]
+    });
+  }
+  if ("status" in filter) {
+    Object.assign(cond, { status: filter["status"] });
+  }
   if (filter.search !== null) {
     Object.assign(cond, {
       $or: [
@@ -453,13 +480,24 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
     });
   }
   if (filter.filter !== null) ;
-  let sort = filter.sort ? filter.sort : { createdAt: -1 };
+  console.log("this si cond+++++==", cond);
   let limit = parseInt(filter.limit) || 10;
   let skip = (parseInt(filter.page) - 1) * limit || 0;
+  const startDate = "01-12-2024";
+  const endDate = "22-12-2024";
+  const parsedStartDate = new Date(startDate.split("-").reverse().join("-"));
+  const parsedEndDate = new Date(endDate.split("-").reverse().join("-"));
   const allItems = await delivery.aggregate([
-    // {
-    //   $match: cond
-    // },
+    {
+      $match: {
+        event_date: {
+          $gte: parsedStartDate,
+          // Use the parsed start date
+          $lte: parsedEndDate
+          // Use the parsed end date
+        }
+      }
+    },
     {
       $sort: sort
     },
@@ -548,8 +586,21 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
       }
     }
   ]);
+  const bookOfcIds = allItems[0].data.map((item) => item.book_ofc).filter(Boolean);
+  const uniqueBookOfcIds = [...new Set(bookOfcIds)];
+  const masterData = await master.find({ facility_id: { $in: uniqueBookOfcIds } });
+  const mergedData = allItems[0].data.map((delivery2) => {
+    const matchingMaster = masterData.find((master2) => master2.facility_id === delivery2.book_ofc);
+    return {
+      ...delivery2,
+      // Plain object, no need for toObject()
+      masterData: matchingMaster || null
+      // Add master data or null if not found
+    };
+  });
   let holdVal = [];
   if (allItems && allItems.length) {
+    allItems[0]["data"] = mergedData;
     holdVal = allItems[0];
   } else {
     holdVal = [];
