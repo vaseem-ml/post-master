@@ -19,36 +19,36 @@ const App = () => {
   return (
     <Router>
       <div className="min-h-screen flex">
-        <nav className="w-64 bg-gray-800 text-white flex flex-col">
+        <nav className="w-[200px] bg-gray-800 text-white flex flex-col">
           <ul className="space-y-4 p-4 list-none">
             <li>
               <Link to="/" className="flex items-center space-x-2 hover:bg-gray-700 p-2 rounded">
                 <FontAwesomeIcon icon={faHome} className="text-white" />
-                <span className="text-white">Home</span>
+                <span className="text-white text-sm">Home</span>
               </Link>
             </li>
             <li>
               <Link to="/delivery" className="flex items-center space-x-2 hover:bg-gray-700 p-2 rounded">
                 <FontAwesomeIcon className="text-white" icon={faUpload} />
-                <span className="text-white">Upload Delivery Data</span>
+                <span className="text-white text-sm">Upload Delivery Data</span>
               </Link>
             </li>
             <li>
               <Link to="/delivery-table" className="flex items-center space-x-2 hover:bg-gray-700 p-2 rounded">
                 <FontAwesomeIcon className="text-white" icon={faTable} />
-                <span className="text-white">Delivery Data</span>
+                <span className="text-white text-sm">Delivery Data</span>
               </Link>
             </li>
             <li>
               <Link to="/master" className="flex items-center space-x-2 hover:bg-gray-700 p-2 rounded">
                 <FontAwesomeIcon className="text-white" icon={faUpload} />
-                <span className="text-white">Upload Master Data</span>
+                <span className="text-white text-sm">Upload Master Data</span>
               </Link>
             </li>
             <li>
               <Link to="/master-table" className="flex items-center space-x-2 hover:bg-gray-700 p-2 rounded">
                 <FontAwesomeIcon className="text-white" icon={faTable} />
-                <span className="text-white">Master Data</span>
+                <span className="text-white text-sm">Master Data</span>
               </Link>
             </li>
             {/* <li>
