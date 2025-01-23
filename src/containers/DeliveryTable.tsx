@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
-import { Pagination, message, Button, Spin, Table, Select, DatePicker, Modal } from 'antd';
+import { Pagination, message, Button, Spin, Table, Select, DatePicker, Modal, Input } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 
 import { deliveryStatusDropOpt } from '../utils/utils';
@@ -16,6 +16,7 @@ const DeliveryTable = () => {
   const [dates, setDates] = useState<any>(['', '']);
   const [payload, setPayload] = useState({ page: 1, page_size: 10 });
 
+  const [searchString, setSearchString] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("asc");
   const [sortField, setSortField] = useState<string | undefined>(undefined);
   const [selectedData, setSelectedData] = useState<any>(null);
@@ -34,18 +35,22 @@ const DeliveryTable = () => {
   async function callDataSeeker() {
     console.log("callDataSeeker got called");
 
-    let startDate = null, endDate = null, status = null, filter = null;
+    let startDate = null, endDate = null, status = null, filter = null, searchStr = null;
     if (isEmpty(dates) == false && dates?.length > 0 && dates?.[0] !== "" && dates?.[1] !== "") {
-      startDate = dates[0];
-      endDate = dates[1];
+      startDate = dayjs(dates[0], "DD-MM-YYYY").format("YYYY-MM-DD");
+      endDate = dayjs(dates[1], "DD-MM-YYYY").format("YYYY-MM-DD");
     }
 
     if (isEmpty(statusFilter) == false) {
       status = statusFilter;
     }
 
-    if (isEmpty(status) == false) {
-      filter = [{ status: status }];
+    // if (isEmpty(status) == false) {
+    //   filter = [{ status: status }];
+    // }
+
+    if (searchString !== "") {
+      searchStr = searchString;
     }
 
     let queryTable = {
@@ -53,8 +58,8 @@ const DeliveryTable = () => {
       limit: payload?.page_size,
       startDate: startDate,
       endDate: endDate,
-      filter: filter,
-      search: null,
+      status: status,
+      search: searchStr,
     }
 
     if (sortField == "" || sortField == undefined) {
@@ -70,8 +75,8 @@ const DeliveryTable = () => {
 
     window.getDeliveryData.receiveMessage((response: any) => {
       const { status, data } = JSON.parse(response);
-      console.log("status", status);
-      console.log("data", data);
+      console.log("getDeliveryData status", status);
+      console.log("getDeliveryData data", data);
       if (status == true) {
         // message.success("Delivery data fetched.");
         setRowData(data?.data);
@@ -260,6 +265,18 @@ const DeliveryTable = () => {
       <Spin spinning={loader}>
 
         <div className='flex pb-5'>
+
+          <div className='me-3'>
+            <Input
+              name="facility_id_search"
+              id="facility_id_search"
+              value={searchString}
+              allowClear={true}
+              onChange={(val) => { setSearchString(val.target.value) }}
+              placeholder="Search facility id"
+            />
+          </div>
+
           <div className='me-3'>
             <Select
               className='w-[200px]'
@@ -273,6 +290,7 @@ const DeliveryTable = () => {
               allowClear={true}
             />
           </div>
+
           <div className="ms-3">
             <RangePicker
               // disabledDate={disabledDate}
@@ -281,6 +299,7 @@ const DeliveryTable = () => {
               format="DD-MM-YYYY"
             />
           </div>
+
           <div className='ms-3'>
             <Button
               type="primary"
@@ -288,6 +307,7 @@ const DeliveryTable = () => {
               onClick={filterOp}
             >Apply Filter</Button>
           </div>
+
         </div>
 
         <div className=''>

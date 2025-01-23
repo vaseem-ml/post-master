@@ -122,14 +122,53 @@ function Delivery() {
       const worksheet = workbook.Sheets[sheetName];
       const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
       const keys: any = json[0];
-      const jsonData: any = json.slice(1).map((row: any) =>
+
+      // const jsonData: any = json.slice(1).map((row: any) =>
+      //   row.reduce((acc: any, value: any, index: any) => {
+      //     acc[keys[index]] = value !== undefined ? value : "";
+      //     return acc;
+      //   }, {})
+      // );
+
+      // const jsonData = json.slice(1).map((row: any) =>
+      //   row.reduce((acc, value, index) => {
+      //     if (keys[index] && keys[index].toLowerCase().includes('date')) {
+      //       // Assuming the date is in the format "DD/MM/YYYY"
+      //       if (typeof value === 'number') {
+      //         value = XLSX.SSF.format('dd/mm/yyyy', value); // Format numeric date correctly
+      //       }
+      //       const [day, month, year] = value.split('/');
+      //       acc[keys[index]] = new Date(`${year}-${month}-${day}`);
+      //     } else {
+      //       acc[keys[index]] = value !== undefined ? value : "";
+      //     }
+      //     return acc;
+      //   }, {})
+      // );
+
+      const jsonData = json.slice(1).map((row: any) =>
         row.reduce((acc: any, value: any, index: any) => {
-          acc[keys[index]] = value !== undefined ? value : "";
+          if (keys[index] && keys[index].toLowerCase().includes('date')) {
+            // Assuming the date is in the format "DD/MM/YYYY"
+            if (typeof value === 'number') {
+              value = XLSX.SSF.format('dd/mm/yyyy', value); // Format numeric date correctly
+            }
+            const [day, month, year] = value.split('/');
+            acc[keys[index]] = new Date(`${year}-${month}-${day}`);
+          } else if (keys[index] && keys[index].toLowerCase().includes('time')) {
+            // Handle time format "HH:MM:SS"
+            if (typeof value === 'number') {
+              value = XLSX.SSF.format('hh:mm:ss', value); // Format numeric time correctly
+            }
+            acc[keys[index]] = value;
+          } else {
+            acc[keys[index]] = value !== undefined ? value : "";
+          }
           return acc;
         }, {})
       );
 
-      // console.log(TAG + " jsonData jsonData ", jsonData);
+      console.log(TAG + " jsonData jsonData ", jsonData);
 
       if (isEmpty(jsonData) == true || isEmpty(jsonData?.[0]) == true || isEmpty(keys) == true) {
         message.error("file is empty.");
@@ -208,6 +247,9 @@ function Delivery() {
         item.is_deleted = false;
         item.is_active = true;
       });
+
+      console.log(TAG + "final data to submit ");
+      console.log(onlyDbKeys);
 
       calledd(onlyDbKeys);
 

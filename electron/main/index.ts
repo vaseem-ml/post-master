@@ -291,31 +291,31 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
   // let cond = { company: Mongoose.Types.ObjectId(filter.company) }
   // let cond = {};
-  
+
   let search = null;
   let sort: any = filter.sort ? filter.sort : { createdAt: -1 };
 
 
-  switch (filter.sortKey) {
+  // switch (filter.sortKey) {
 
-    case "book_ofc":
-      sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "book_ofc":
+  //     sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "event_date":
-      sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "event_date":
+  //     sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "status":
-      sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "status":
+  //     sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    default:
-      break;
+  //   default:
+  //     break;
 
-  }
+  // }
 
-  let cond:any = {}
+  let cond: any = {}
 
   // let andCond:any = [
   //   { status: "Bag Dispatched" }
@@ -331,7 +331,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
   // }
 
-  if (filter.startDate) {
+  if (filter.startDate && filter.endDate) {
     Object.assign(cond, {
       $and: [
         {
@@ -344,12 +344,9 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     })
   }
 
-  if('status' in filter) {
-    Object.assign(cond, { status: filter['status']})
+  if (filter.status !== null) {
+    Object.assign(cond, { status: filter['status'] })
   }
-
-
-
 
 
   if (filter.search !== null) {
@@ -364,14 +361,15 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     });
   }
 
-  if (filter.filter !== null) {
+  // if (filter.filter !== null) {
 
-  }
+  // }
 
 
   console.log("this si cond+++++==", cond)
+  console.log("this si sort+++++==", sort)
 
-  
+
 
   let limit = parseInt(filter.limit) || 10;
   let skip = (parseInt(filter.page) - 1) * limit || 0;
@@ -386,7 +384,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
   const allItems: any = await delivery.aggregate([
     {
-      $match: {}
+      $match: cond
     },
     {
       $sort: sort
@@ -441,7 +439,6 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
         updatedAt: 1,
       }
     },
-
     {
       $facet: {
         total: [{ $count: 'createdAt' }],
@@ -480,29 +477,39 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
   // console.log("this is all items+++++++++=", allItems[0]);
 
-  const bookOfcIds = allItems[0].data.map((item:any) => item.book_ofc).filter(Boolean);
-  const uniqueBookOfcIds = [...new Set(bookOfcIds)];
-  const masterData = await master.find({ facility_id: { $in: uniqueBookOfcIds } })
-  
-
-  const mergedData = allItems[0].data.map((delivery:any) => {
-    const matchingMaster = masterData.find(master => master.facility_id === delivery.book_ofc);
-    return {
-      ...delivery, // Plain object, no need for toObject()
-      masterData: matchingMaster || null, // Add master data or null if not found
-    };
-  });
-
-
-
-
   let holdVal = [];
-  if (allItems && allItems.length) {
-    allItems[0]["data"] = mergedData
-    holdVal = allItems[0];
+  if (allItems && allItems?.length) {
+    const bookOfcIds = allItems[0].data.map((item: any) => item.book_ofc).filter(Boolean);
+    const uniqueBookOfcIds = [...new Set(bookOfcIds)];
+    const masterData = await master.find({ facility_id: { $in: uniqueBookOfcIds } })
+
+
+    const mergedData = allItems[0].data.map((delivery: any) => {
+      const matchingMaster = masterData.find(master => master.facility_id === delivery.book_ofc);
+      return {
+        ...delivery, // Plain object, no need for toObject()
+        masterData: matchingMaster || null, // Add master data or null if not found
+      };
+    });
+
+
+    if (allItems && allItems.length) {
+      allItems[0]["data"] = mergedData
+      holdVal = allItems[0];
+    } else {
+      holdVal = [];
+    }
+
   } else {
     holdVal = [];
   }
+
+
+
+
+
+
+
 
   // return {
   //   data: mergedData,
