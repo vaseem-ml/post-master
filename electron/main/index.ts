@@ -282,8 +282,12 @@ ipcMain.on('getMasterData', async (event, filter) => {
   //   event.reply('login-error', JSON.stringify({ status: false, data: err }));
   // }
 
+});
 
+ipcMain.on('delete', async (event, filter) => {
+});
 
+ipcMain.on('update', async (event, filter) => {
 });
 
 ipcMain.on('getDeliveryData', async (event, filter) => {
@@ -346,7 +350,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
           }
         },
         {
-          dest_ofc_name: {
+          book_ofc_name: {
             $regex: '.*' + filter.search + '.*', $options: 'si'
           }
         },

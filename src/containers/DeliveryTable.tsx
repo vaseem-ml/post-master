@@ -36,6 +36,32 @@ const DeliveryTable = () => {
     callDataSeeker();
   }
 
+  function esitCal(calledWith: any) {
+    if (isEmpty(calledWith) == true || isEmpty(calledWith?.book_date) == true || calledWith?.book_date == "") {
+      return "_";
+    }
+
+    try {
+      const dateOnly = dayjs(calledWith?.book_date).format('YYYY-MM-DD');
+      if (isEmpty(calledWith?.masterData?.d2) == false) {
+        let dataParsed: any = '';
+        try {
+          dataParsed = parseInt(calledWith?.masterData?.d2);
+        } catch (error) {
+          return "_";
+        }
+        const newDate = dayjs(dateOnly).add(dataParsed, 'day').format('DD-MM-YYYY');
+        return newDate;
+      } else {
+        const newDate = dayjs(dateOnly).add(3, 'day').format('DD-MM-YYYY');
+        return newDate;
+      }
+    } catch (error) {
+      return "_";
+    }
+
+  }
+
   async function callDataSeeker() {
     console.log("callDataSeeker got called");
 
@@ -243,6 +269,16 @@ const DeliveryTable = () => {
       render: (rts: string) => {
         return (
           <span>{rts || "-"}</span>
+        );
+      },
+    },
+    {
+      title: "Estimated Date",
+      dataIndex: "rts",
+      ellipsis: false,
+      render: (rts: string, row: any) => {
+        return (
+          <span>{esitCal(row)}</span>
         );
       },
     },
