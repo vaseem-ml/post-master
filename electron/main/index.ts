@@ -87,8 +87,8 @@ async function createWindow() {
 
 app.whenReady().then(createWindow).then(() => {
   connect(`mongodb://localhost:27017`, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+    // useNewUrlParser: true,
+    // useUnifiedTopology: true,
   }).then(async (err) => {
 
     console.log("download done");
@@ -159,6 +159,8 @@ ipcMain.on('login', async (event, payload) => {
 ipcMain.on('deliveryAdd', async (event, payload) => {
 
   try {
+
+    console.log("addding delivery data+++++++++++++++++=======")
     const docs = await delivery.insertMany(payload, { ordered: false });
     // console.log('Bulk insert successful:', docs);
     event.reply('delivery-add-success', JSON.stringify({ status: true, data: docs }));
@@ -317,20 +319,6 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
   let cond: any = {}
 
-  // let andCond:any = [
-  //   { status: "Bag Dispatched" }
-  // ]
-
-  // if(filter.startDate) {
-  //   andCond.push({ $expr: { $gte: [{ $toDate: "$event_date" }, new Date(filter.startDate)] } })
-  //     // Object.assign({ $expr: { $gte: [{ $toDate: "$event_date" }, new Date(filter.startDate)] } } )
-  // }
-
-  // if(filter.endDate) {
-  //   andCond.push({ $expr: { $lte: [{ $toDate: "$event_date" }, new Date(filter.endDate)] } } )
-
-  // }
-
   if (filter.startDate && filter.endDate) {
     Object.assign(cond, {
       $and: [
@@ -349,11 +337,16 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
   }
 
 
-  if (filter.search !== null) {
+  if (filter.search) {
     Object.assign(cond, {
       $or: [
         {
-          facility_id: {
+          article: {
+            $regex: '.*' + filter.search + '.*', $options: 'si'
+          }
+        },
+        {
+          dest_ofc_name: {
             $regex: '.*' + filter.search + '.*', $options: 'si'
           }
         },
@@ -361,26 +354,10 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     });
   }
 
-  // if (filter.filter !== null) {
-
-  // }
-
-
-  console.log("this si cond+++++==", cond)
-  console.log("this si sort+++++==", sort)
-
 
 
   let limit = parseInt(filter.limit) || 10;
   let skip = (parseInt(filter.page) - 1) * limit || 0;
-
-  // const startDate = '01-12-2024';
-  // const endDate = '22-12-2024';
-
-  // Parse the dates to valid JavaScript Date objects
-  // const parsedStartDate = new Date(startDate.split('-').reverse().join('-'));
-  // const parsedEndDate = new Date(endDate.split('-').reverse().join('-'));
-
 
   const allItems: any = await delivery.aggregate([
     {
