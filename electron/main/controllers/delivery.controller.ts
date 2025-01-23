@@ -4,7 +4,8 @@ const deliverySchema = new Schema(
 	{
 		article: {
 			type: String,
-			required: true
+			required: true,
+			unique: true
 		},
 		booking: {
 			type: String
@@ -132,7 +133,7 @@ const deliverySchema = new Schema(
 	}
 );
 
-
+deliverySchema.index({ article: 1 }, { unique: true });
 const delivery = model('delivery', deliverySchema);
 
 export default delivery;

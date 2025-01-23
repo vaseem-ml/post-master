@@ -1,122 +1,106 @@
-import { app, ipcMain, BrowserWindow, shell } from "electron";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import { Schema, model, connect } from "mongoose";
-import os from "node:os";
-const { autoUpdater } = createRequire(import.meta.url)("electron-updater");
-function update(win2) {
-  autoUpdater.autoDownload = false;
-  autoUpdater.disableWebInstaller = false;
-  autoUpdater.allowDowngrade = false;
-  autoUpdater.on("checking-for-update", function() {
-  });
-  autoUpdater.on("update-available", (arg) => {
-    win2.webContents.send("update-can-available", { update: true, version: app.getVersion(), newVersion: arg == null ? void 0 : arg.version });
-  });
-  autoUpdater.on("update-not-available", (arg) => {
-    win2.webContents.send("update-can-available", { update: false, version: app.getVersion(), newVersion: arg == null ? void 0 : arg.version });
-  });
-  ipcMain.handle("check-update", async () => {
-    if (!app.isPackaged) {
-      const error = new Error("The update feature is only available after the package.");
-      return { message: error.message, error };
+import { app as r, ipcMain as c, BrowserWindow as f, shell as P } from "electron";
+import { createRequire as w } from "node:module";
+import { fileURLToPath as V } from "node:url";
+import p from "node:path";
+import { Schema as S, model as v, connect as N } from "mongoose";
+import T from "node:os";
+const { autoUpdater: o } = w(import.meta.url)("electron-updater");
+function x(t) {
+  o.autoDownload = !1, o.disableWebInstaller = !1, o.allowDowngrade = !1, o.on("checking-for-update", function() {
+  }), o.on("update-available", (e) => {
+    t.webContents.send("update-can-available", { update: !0, version: r.getVersion(), newVersion: e == null ? void 0 : e.version });
+  }), o.on("update-not-available", (e) => {
+    t.webContents.send("update-can-available", { update: !1, version: r.getVersion(), newVersion: e == null ? void 0 : e.version });
+  }), c.handle("check-update", async () => {
+    if (!r.isPackaged) {
+      const e = new Error("The update feature is only available after the package.");
+      return { message: e.message, error: e };
     }
     try {
-      return await autoUpdater.checkForUpdatesAndNotify();
-    } catch (error) {
-      return { message: "Network error", error };
+      return await o.checkForUpdatesAndNotify();
+    } catch (e) {
+      return { message: "Network error", error: e };
     }
-  });
-  ipcMain.handle("start-download", (event) => {
-    startDownload(
-      (error, progressInfo) => {
-        if (error) {
-          event.sender.send("update-error", { message: error.message, error });
-        } else {
-          event.sender.send("download-progress", progressInfo);
-        }
+  }), c.handle("start-download", (e) => {
+    U(
+      (a, s) => {
+        a ? e.sender.send("update-error", { message: a.message, error: a }) : e.sender.send("download-progress", s);
       },
       () => {
-        event.sender.send("update-downloaded");
+        e.sender.send("update-downloaded");
       }
     );
-  });
-  ipcMain.handle("quit-and-install", () => {
-    autoUpdater.quitAndInstall(false, true);
+  }), c.handle("quit-and-install", () => {
+    o.quitAndInstall(!1, !0);
   });
 }
-function startDownload(callback, complete) {
-  autoUpdater.on("download-progress", (info) => callback(null, info));
-  autoUpdater.on("error", (error) => callback(error, null));
-  autoUpdater.on("update-downloaded", complete);
-  autoUpdater.downloadUpdate();
+function U(t, e) {
+  o.on("download-progress", (a) => t(null, a)), o.on("error", (a) => t(a, null)), o.on("update-downloaded", e), o.downloadUpdate();
 }
-const masterSchema = new Schema(
+const L = new S(
   {
     pincode: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     facility_id: {
       type: String,
-      unique: true,
-      required: true
+      unique: !0,
+      required: !0
     },
     booking_office: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     office_name: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     division: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     region: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     d1: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     d2: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     is_deleted: {
       type: Boolean,
-      default: false,
-      allownull: false,
-      required: true
+      default: !1,
+      allownull: !1,
+      required: !0
     },
     is_active: {
       type: Boolean,
-      default: true,
-      allownull: false,
-      required: true
+      default: !0,
+      allownull: !1,
+      required: !0
     }
   },
   {
-    timestamps: true
+    timestamps: !0
   }
-);
-const master = model("master", masterSchema);
-const deliverySchema = new Schema(
+), m = v("master", L), $ = new S(
   {
     article: {
       type: String,
-      required: true
+      required: !0,
+      unique: !0
     },
     booking: {
       type: String
@@ -240,141 +224,104 @@ const deliverySchema = new Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: !0
   }
 );
-const delivery = model("delivery", deliverySchema);
-createRequire(import.meta.url);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-process.env.APP_ROOT = path.join(__dirname, "../..");
-const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-if (os.release().startsWith("6.1")) app.disableHardwareAcceleration();
-if (process.platform === "win32") app.setAppUserModelId(app.getName());
-if (!app.requestSingleInstanceLock()) {
-  app.quit();
-  process.exit(0);
-}
-let win = null;
-const preload = path.join(__dirname, "../preload/index.mjs");
-const indexHtml = path.join(RENDERER_DIST, "index.html");
-async function createWindow() {
-  win = new BrowserWindow({
+$.index({ article: 1 }, { unique: !0 });
+const h = v("delivery", $);
+w(import.meta.url);
+const b = p.dirname(V(import.meta.url));
+process.env.APP_ROOT = p.join(b, "../..");
+const H = p.join(process.env.APP_ROOT, "dist-electron"), k = p.join(process.env.APP_ROOT, "dist"), _ = process.env.VITE_DEV_SERVER_URL;
+process.env.VITE_PUBLIC = _ ? p.join(process.env.APP_ROOT, "public") : k;
+T.release().startsWith("6.1") && r.disableHardwareAcceleration();
+process.platform === "win32" && r.setAppUserModelId(r.getName());
+r.requestSingleInstanceLock() || (r.quit(), process.exit(0));
+let n = null;
+const A = p.join(b, "../preload/index.mjs"), D = p.join(k, "index.html");
+async function q() {
+  n = new f({
     title: "Main window",
-    icon: path.join(process.env.VITE_PUBLIC, "favicon.ico"),
+    icon: p.join(process.env.VITE_PUBLIC, "favicon.ico"),
     webPreferences: {
-      preload
+      preload: A
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
       // nodeIntegration: true,
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       // contextIsolation: false,
     }
-  });
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-    win.webContents.openDevTools();
-  } else {
-    win.loadFile(indexHtml);
-  }
-  win.webContents.on("did-finish-load", () => {
-    win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-  });
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("https:")) shell.openExternal(url);
-    return { action: "deny" };
-  });
-  update(win);
+  }), _ ? (n.loadURL(_), n.webContents.openDevTools()) : n.loadFile(D), n.webContents.on("did-finish-load", () => {
+    n == null || n.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  }), n.webContents.setWindowOpenHandler(({ url: t }) => (t.startsWith("https:") && P.openExternal(t), { action: "deny" })), x(n);
 }
-app.whenReady().then(createWindow).then(() => {
-  connect(`mongodb://localhost:27017`, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  }).then(async (err) => {
+r.whenReady().then(q).then(() => {
+  N("mongodb://localhost:27017", {
+    // useNewUrlParser: true,
+    // useUnifiedTopology: true,
+  }).then(async (t) => {
     console.log("download done");
-  }).catch((err) => {
-    console.log("Error in db connection", err);
+  }).catch((t) => {
+    console.log("Error in db connection", t);
   });
 });
-app.on("window-all-closed", () => {
-  win = null;
-  if (process.platform !== "darwin") app.quit();
+r.on("window-all-closed", () => {
+  n = null, process.platform !== "darwin" && r.quit();
 });
-app.on("second-instance", () => {
-  if (win) {
-    if (win.isMinimized()) win.restore();
-    win.focus();
-  }
+r.on("second-instance", () => {
+  n && (n.isMinimized() && n.restore(), n.focus());
 });
-app.on("activate", () => {
-  const allWindows = BrowserWindow.getAllWindows();
-  if (allWindows.length) {
-    allWindows[0].focus();
-  } else {
-    createWindow();
-  }
+r.on("activate", () => {
+  const t = f.getAllWindows();
+  t.length ? t[0].focus() : q();
 });
-ipcMain.handle("open-win", (_, arg) => {
-  const childWindow = new BrowserWindow({
+c.handle("open-win", (t, e) => {
+  const a = new f({
     webPreferences: {
-      preload,
-      nodeIntegration: true,
-      contextIsolation: false
+      preload: A,
+      nodeIntegration: !0,
+      contextIsolation: !1
     }
   });
-  if (VITE_DEV_SERVER_URL) {
-    childWindow.loadURL(`${VITE_DEV_SERVER_URL}#${arg}`);
-  } else {
-    childWindow.loadFile(indexHtml, { hash: arg });
-  }
+  _ ? a.loadURL(`${_}#${e}`) : a.loadFile(D, { hash: e });
 });
-ipcMain.on("login", async (event, payload) => {
+c.on("login", async (t, e) => {
   try {
-    const docs = await master.insertMany(payload, { ordered: false });
-    event.reply("login-success", JSON.stringify({ status: true, data: docs }));
-  } catch (err) {
-    event.reply("login-error", JSON.stringify({ status: false, data: err }));
+    const a = await m.insertMany(e, { ordered: !1 });
+    t.reply("login-success", JSON.stringify({ status: !0, data: a }));
+  } catch (a) {
+    t.reply("login-error", JSON.stringify({ status: !1, data: a }));
   }
 });
-ipcMain.on("deliveryAdd", async (event, payload) => {
+c.on("deliveryAdd", async (t, e) => {
   try {
-    const docs = await delivery.insertMany(payload, { ordered: false });
-    event.reply("delivery-add-success", JSON.stringify({ status: true, data: docs }));
-  } catch (err) {
-    event.reply("delivery-add-error", JSON.stringify({ status: false, data: err }));
+    console.log("addding delivery data+++++++++++++++++=======");
+    const a = await h.insertMany(e, { ordered: !1 });
+    t.reply("delivery-add-success", JSON.stringify({ status: !0, data: a }));
+  } catch (a) {
+    t.reply("delivery-add-error", JSON.stringify({ status: !1, data: a }));
   }
 });
-ipcMain.on("getMasterData", async (event, filter) => {
-  console.log("get master data called");
-  console.log(filter);
-  let cond = {};
-  let search = null;
-  if (filter.search !== null) {
-    search = filter.search;
-  }
-  if (search) {
-    Object.assign(cond, {
-      $or: [
-        {
-          facility_id: {
-            $regex: ".*" + search + ".*",
-            $options: "si"
-          }
+c.on("getMasterData", async (t, e) => {
+  console.log("get master data called"), console.log(e);
+  let a = {}, s = null;
+  e.search !== null && (s = e.search), s && Object.assign(a, {
+    $or: [
+      {
+        facility_id: {
+          $regex: ".*" + s + ".*",
+          $options: "si"
         }
-      ]
-    });
-  }
-  let sort = filter.sort ? filter.sort : { createdAt: -1 };
-  let limit = parseInt(filter.limit) || 10;
-  let skip = (parseInt(filter.page) - 1) * limit || 0;
-  const allItems = await master.aggregate([
+      }
+    ]
+  });
+  let u = e.sort ? e.sort : { createdAt: -1 }, d = parseInt(e.limit) || 10, i = (parseInt(e.page) - 1) * d || 0;
+  const l = await m.aggregate([
     // {
     //   $match: cond
     // },
     {
-      $sort: sort
+      $sort: u
     },
     {
       $project: {
@@ -407,77 +354,65 @@ ipcMain.on("getMasterData", async (event, filter) => {
     {
       $project: {
         data: {
-          $slice: ["$data", skip, {
-            $ifNull: [limit, "$total.createdAt"]
+          $slice: ["$data", i, {
+            $ifNull: [d, "$total.createdAt"]
           }]
         },
         meta: {
           total: "$total.createdAt",
           limit: {
-            $literal: limit
+            $literal: d
           },
           page: {
-            $literal: skip / limit + 1
+            $literal: i / d + 1
           },
           pages: {
             $ceil: {
-              $divide: ["$total.createdAt", limit]
+              $divide: ["$total.createdAt", d]
             }
           }
         }
       }
     }
   ]);
-  let holdVal = [];
-  if (allItems && allItems.length) {
-    holdVal = allItems[0];
-  } else {
-    holdVal = [];
-  }
-  event.reply("get-master-success", JSON.stringify({ status: true, data: holdVal }));
+  let g = [];
+  l && l.length ? g = l[0] : g = [], t.reply("get-master-success", JSON.stringify({ status: !0, data: g }));
 });
-ipcMain.on("getDeliveryData", async (event, filter) => {
-  console.log("get delivery data called");
-  console.log(filter);
-  let sort = filter.sort ? filter.sort : { createdAt: -1 };
-  let cond = {};
-  if (filter.startDate && filter.endDate) {
-    Object.assign(cond, {
-      $and: [
-        {
-          "event_date": { $gte: new Date(filter.startDate) }
-        },
-        {
-          "event_date": { $lte: new Date(filter.endDate) }
+c.on("getDeliveryData", async (t, e) => {
+  console.log("get delivery data called"), console.log(e);
+  let a = e.sort ? e.sort : { createdAt: -1 }, s = {};
+  e.startDate && e.endDate && Object.assign(s, {
+    $and: [
+      {
+        event_date: { $gte: new Date(e.startDate) }
+      },
+      {
+        event_date: { $lte: new Date(e.endDate) }
+      }
+    ]
+  }), e.status !== null && Object.assign(s, { status: e.status }), e.search && Object.assign(s, {
+    $or: [
+      {
+        article: {
+          $regex: ".*" + e.search + ".*",
+          $options: "si"
         }
-      ]
-    });
-  }
-  if (filter.status !== null) {
-    Object.assign(cond, { status: filter["status"] });
-  }
-  if (filter.search !== null) {
-    Object.assign(cond, {
-      $or: [
-        {
-          facility_id: {
-            $regex: ".*" + filter.search + ".*",
-            $options: "si"
-          }
+      },
+      {
+        dest_ofc_name: {
+          $regex: ".*" + e.search + ".*",
+          $options: "si"
         }
-      ]
-    });
-  }
-  console.log("this si cond+++++==", cond);
-  console.log("this si sort+++++==", sort);
-  let limit = parseInt(filter.limit) || 10;
-  let skip = (parseInt(filter.page) - 1) * limit || 0;
-  const allItems = await delivery.aggregate([
+      }
+    ]
+  });
+  let u = parseInt(e.limit) || 10, d = (parseInt(e.page) - 1) * u || 0;
+  const i = await h.aggregate([
     {
-      $match: cond
+      $match: s
     },
     {
-      $sort: sort
+      $sort: a
     },
     {
       $project: {
@@ -543,55 +478,45 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
     {
       $project: {
         data: {
-          $slice: ["$data", skip, {
-            $ifNull: [limit, "$total.createdAt"]
+          $slice: ["$data", d, {
+            $ifNull: [u, "$total.createdAt"]
           }]
         },
         meta: {
           total: "$total.createdAt",
           limit: {
-            $literal: limit
+            $literal: u
           },
           page: {
-            $literal: skip / limit + 1
+            $literal: d / u + 1
           },
           pages: {
             $ceil: {
-              $divide: ["$total.createdAt", limit]
+              $divide: ["$total.createdAt", u]
             }
           }
         }
       }
     }
   ]);
-  let holdVal = [];
-  if (allItems && (allItems == null ? void 0 : allItems.length)) {
-    const bookOfcIds = allItems[0].data.map((item) => item.book_ofc).filter(Boolean);
-    const uniqueBookOfcIds = [...new Set(bookOfcIds)];
-    const masterData = await master.find({ facility_id: { $in: uniqueBookOfcIds } });
-    const mergedData = allItems[0].data.map((delivery2) => {
-      const matchingMaster = masterData.find((master2) => master2.facility_id === delivery2.book_ofc);
+  let l = [];
+  if (i && (i != null && i.length)) {
+    const g = i[0].data.map((y) => y.book_ofc).filter(Boolean), I = [...new Set(g)], O = await m.find({ facility_id: { $in: I } }), R = i[0].data.map((y) => {
+      const j = O.find((E) => E.facility_id === y.book_ofc);
       return {
-        ...delivery2,
+        ...y,
         // Plain object, no need for toObject()
-        masterData: matchingMaster || null
+        masterData: j || null
         // Add master data or null if not found
       };
     });
-    if (allItems && allItems.length) {
-      allItems[0]["data"] = mergedData;
-      holdVal = allItems[0];
-    } else {
-      holdVal = [];
-    }
-  } else {
-    holdVal = [];
-  }
-  event.reply("get-delivery-success", JSON.stringify({ status: true, data: holdVal }));
+    i && i.length ? (i[0].data = R, l = i[0]) : l = [];
+  } else
+    l = [];
+  t.reply("get-delivery-success", JSON.stringify({ status: !0, data: l }));
 });
 export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL
+  H as MAIN_DIST,
+  k as RENDERER_DIST,
+  _ as VITE_DEV_SERVER_URL
 };
-//# sourceMappingURL=index.js.map
