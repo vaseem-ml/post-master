@@ -4474,7 +4474,11 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
   let skip = (parseInt(filter.page) - 1) * limit || 0;
   const allItems = await delivery.aggregate([
     {
+<<<<<<< Updated upstream
       $match: cond
+=======
+      $match: {}
+>>>>>>> Stashed changes
     },
     {
       $sort: sort
