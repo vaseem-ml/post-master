@@ -285,9 +285,25 @@ ipcMain.on('getMasterData', async (event, filter) => {
 });
 
 ipcMain.on('delete', async (event, filter) => {
+  console.log('delete function is calling+++++++++======', filter)
+  const result = await delivery.deleteMany(filter.ids);
+
+  event.reply('delete-response', JSON.stringify({ status: true, data: {} }));
+
+
+
 });
 
 ipcMain.on('update', async (event, filter) => {
+
+  console.log('update function is calling++++++++=======', filter)
+  const result = await delivery.updateMany(filter.cond, filter.updateData);
+
+  event.reply('update-response', JSON.stringify({ status: true, data: {} }));
+
+
+
+
 });
 
 ipcMain.on('getDeliveryData', async (event, filter) => {
