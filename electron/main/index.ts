@@ -11,6 +11,8 @@ const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 import master from './controllers/masters.controller';
 import delivery from './controllers/delivery.controller';
+import moment from "moment"
+// const moment = require('moment');
 
 // The built directory structure
 //
@@ -482,12 +484,43 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
 
     const mergedData = allItems[0].data.map((delivery: any) => {
-      const matchingMaster = masterData.find(master => master.facility_id === delivery.book_ofc);
+      const matchingMaster:any = masterData.find(master => master.facility_id === delivery.book_ofc);
+      const days = matchingMaster['d2'] || 3;
+      const edd = moment(delivery['book_date']).add(parseInt(days)-1, 'days').toDate();
+      const remainDays = moment(edd).diff(delivery.event_date, 'days');
+      let exceeded_days = 0
+      if (remainDays<0) {
+        exceeded_days = Math.abs(remainDays)
+      }
+      
+      console.log('thiss is remain days+++++++=', remainDays)
+      let color=""
+      if(remainDays>=0 && delivery.status=="Item Delivered") {
+        color="green"
+      } else if (remainDays<0 && remainDays>-2 && delivery.status!="Item Delivered") {
+        color="orange"
+      } else if(remainDays<-1 && delivery.status!="Item Delivered") {
+        color="red"
+      } else if(remainDays<=0 && delivery.dest_ofc_id!=delivery.office_id && delivery.status!="Item Delivered") {
+        color="yellow"
+      }
       return {
         ...delivery, // Plain object, no need for toObject()
-        masterData: matchingMaster || null, // Add master data or null if not found
+        edd: edd,
+        color: color,
+        d: matchingMaster['d2'],
+        exceeded_days: exceeded_days
       };
+      // return delivery['edd'] = matchingMaster['d2']?matchingMaster:3
     });
+
+
+    // const refinedData = allItems[0].data.map((delivery:any) => {
+    //   const edd
+    //   const daysDiff = moment(delivery.book_date).diff(delivery.event_date, 'days');
+    //   console.log('days+++++++==', daysDiff)
+    //   console.log('delivery+++=', delivery)
+    // })
 
 
     if (allItems && allItems.length) {
@@ -500,6 +533,9 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
   } else {
     holdVal = [];
   }
+
+  console.log(allItems[0]['data'])
+
 
 
 

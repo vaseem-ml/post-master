@@ -124,19 +124,19 @@ const DeliveryTable = () => {
   async function updateOp() {
 
     setLoader(true);
-    // await window.getDeliveryData.getData(statusToUpdate, "dummyurl");
+    await window.getDeliveryData.getData(statusToUpdate, "dummyurl");
 
-    window.getDeliveryData.receiveMessage((response: any) => {
-      const { status, data } = JSON.parse(response);
-      console.log("getDeliveryData status", status);
-      console.log("getDeliveryData data", data);
-      if (status == true) {
-        message.success("Updated.");
-      } else {
-        message.error("Something went wrong while fetching delivery data.");
-        message.error(JSON.stringify(data));
-      }
-    });
+    // window.getDeliveryData.receiveMessage((response: any) => {
+    //   const { status, data } = JSON.parse(response);
+    //   console.log("getDeliveryData status", status);
+    //   console.log("getDeliveryData data", data);
+    //   if (status == true) {
+    //     message.success("Updated.");
+    //   } else {
+    //     message.error("Something went wrong while fetching delivery data.");
+    //     message.error(JSON.stringify(data));
+    //   }
+    // });
     setEditModal(false);
     setLoader(false);
   }
