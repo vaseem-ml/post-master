@@ -453,6 +453,8 @@ ipcMain.on("delete", async (event, filter) => {
 });
 ipcMain.on("update", async (event, filter) => {
   console.log("update function is calling++++++++=======", filter);
+  await delivery.updateMany(filter.cond, filter.updateData);
+  event.reply("update-response", JSON.stringify({ status: true, data: {} }));
 });
 ipcMain.on("getDeliveryData", async (event, filter) => {
   console.log("get delivery data called");

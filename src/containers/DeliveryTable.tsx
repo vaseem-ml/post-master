@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import { Pagination, message, Button, Spin, Table, Select, DatePicker, Modal, Input, Tag } from 'antd';
 import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleFilled } from '@ant-design/icons';
+import { saveAs } from 'file-saver';
+import Papa from 'papaparse';
 
 import { deliveryStatusDropOpt, deliveryStatusUi } from '../utils/utils';
 import { isEmpty } from 'lodash';
+import type { TableColumnsType, TableProps } from 'antd';
+type TableRowSelection<T extends object = object> = TableProps<T>['rowSelection'];
 
 const TAG = "DeliveryTable: ";
 const DeliveryTable = () => {
@@ -24,17 +28,61 @@ const DeliveryTable = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editModal, setEditModal] = useState(false);
 
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+  const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+    // console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+    setSelectedRowKeys(newSelectedRowKeys);
+  };
 
   const { RangePicker } = DatePicker;
   const { confirm } = Modal;
 
   useEffect(() => {
-    callDataSeeker();
+    callDataSeeker(undefined, undefined);
   }, [payload, sortOrder, sortField]);
 
   const filterOp = () => {
-    callDataSeeker();
+    callDataSeeker(undefined, undefined);
   }
+
+  const rowSelection: TableRowSelection = {
+    selectedRowKeys,
+    onChange: onSelectChange,
+    // selections: [
+    //   Table.SELECTION_ALL,
+    //   Table.SELECTION_INVERT,
+    //   Table.SELECTION_NONE,
+    //   {
+    //     key: 'odd',
+    //     text: 'Select Odd Row',
+    //     onSelect: (changeableRowKeys) => {
+    //       let newSelectedRowKeys = [];
+    //       newSelectedRowKeys = changeableRowKeys.filter((_, index) => {
+    //         if (index % 2 !== 0) {
+    //           return false;
+    //         }
+    //         return true;
+    //       });
+    //       setSelectedRowKeys(newSelectedRowKeys);
+    //     },
+    //   },
+    //   {
+    //     key: 'even',
+    //     text: 'Select Even Row',
+    //     onSelect: (changeableRowKeys) => {
+    //       let newSelectedRowKeys = [];
+    //       newSelectedRowKeys = changeableRowKeys.filter((_, index) => {
+    //         if (index % 2 !== 0) {
+    //           return true;
+    //         }
+    //         return false;
+    //       });
+    //       setSelectedRowKeys(newSelectedRowKeys);
+    //     },
+    //   },
+    // ],
+  };
 
   function esitCal(calledWith: any) {
     if (isEmpty(calledWith) == true || isEmpty(calledWith?.book_date) == true || calledWith?.book_date == "") {
@@ -62,7 +110,7 @@ const DeliveryTable = () => {
 
   }
 
-  async function callDataSeeker() {
+  async function callDataSeeker(cpage: any, cpagesize: any) {
     console.log("callDataSeeker got called");
 
     let startDate = null, endDate = null, status = null, filter = null, searchStr = null;
@@ -84,8 +132,8 @@ const DeliveryTable = () => {
     }
 
     let queryTable = {
-      page: payload?.page,
-      limit: payload?.page_size,
+      page: cpage ? cpage : payload?.page,
+      limit: cpagesize ? cpagesize : payload?.page_size,
       startDate: startDate,
       endDate: endDate,
       status: status,
@@ -109,15 +157,28 @@ const DeliveryTable = () => {
       console.log("getDeliveryData data", data);
       if (status == true) {
         // message.success("Delivery data fetched.");
-        setRowData(data?.data);
-        setRowMeta(data?.meta);
+
+        if (cpage !== undefined && cpagesize !== undefined) {
+          const exportToCSV = (data: any, filename: any) => {
+            const csv = Papa.unparse(data);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            saveAs(blob, `${filename}.csv`);
+            setLoader(false);
+          };
+          exportToCSV(data?.data, "delivery_data");
+        } else {
+          setRowData(data?.data);
+          setRowMeta(data?.meta);
+          setLoader(false);
+        }
       } else {
         message.error("Something went wrong while fetching delivery data.");
         message.error(JSON.stringify(data));
+        setLoader(false);
       }
+
     });
 
-    setLoader(false);
 
   }
 
@@ -126,17 +187,17 @@ const DeliveryTable = () => {
     setLoader(true);
     // await window.getDeliveryData.getData(statusToUpdate, "dummyurl");
 
-    window.getDeliveryData.receiveMessage((response: any) => {
-      const { status, data } = JSON.parse(response);
-      console.log("getDeliveryData status", status);
-      console.log("getDeliveryData data", data);
-      if (status == true) {
-        message.success("Updated.");
-      } else {
-        message.error("Something went wrong while fetching delivery data.");
-        message.error(JSON.stringify(data));
-      }
-    });
+    // window.getDeliveryData.receiveMessage((response: any) => {
+    //   const { status, data } = JSON.parse(response);
+    //   console.log("getDeliveryData status", status);
+    //   console.log("getDeliveryData data", data);
+    //   if (status == true) {
+    //     message.success("Updated.");
+    //   } else {
+    //     message.error("Something went wrong while fetching delivery data.");
+    //     message.error(JSON.stringify(data));
+    //   }
+    // });
     setEditModal(false);
     setLoader(false);
   }
@@ -157,7 +218,13 @@ const DeliveryTable = () => {
     //     message.error(JSON.stringify(data));
     //   }
     // });
-    callDataSeeker();
+    setSelectedRowKeys([]);
+    callDataSeeker(undefined, undefined);
+  }
+
+  async function exportOp() {
+    setLoader(true);
+    callDataSeeker(1, 10000000);
   }
 
   const showConfirm = () => {
@@ -264,16 +331,16 @@ const DeliveryTable = () => {
         );
       },
     },
-    {
-      title: "RTS",
-      dataIndex: "rts",
-      ellipsis: false,
-      render: (rts: string) => {
-        return (
-          <span>{rts || "-"}</span>
-        );
-      },
-    },
+    // {
+    //   title: "RTS",
+    //   dataIndex: "rts",
+    //   ellipsis: false,
+    //   render: (rts: string) => {
+    //     return (
+    //       <span>{rts || "-"}</span>
+    //     );
+    //   },
+    // },
     {
       title: "Estimated Date",
       dataIndex: "rts",
@@ -309,9 +376,9 @@ const DeliveryTable = () => {
             <span className='ms-2' onClick={() => { setSelectedData(row); setEditModal(true); }}>
               <Button shape="circle" icon={<EditOutlined />} />
             </span>
-            <span className='ms-2' onClick={() => { setSelectedData(row); showConfirm(); }}>
+            {/* <span className='ms-2' onClick={() => { setSelectedData(row); showConfirm(); }}>
               <Button shape="circle" icon={<DeleteOutlined />} />
-            </span>
+            </span> */}
           </div>
         );
       },
@@ -352,12 +419,13 @@ const DeliveryTable = () => {
 
 
   // console.log(TAG + " rowMeta ", rowMeta);
-  // console.log(TAG + " rowData ", rowData);
+  console.log(TAG + " rowData ", rowData);
   // console.log(TAG + " statusFilter ", statusFilter);
   // console.log(TAG + " dates ", dates);
   // console.log(TAG + " sortOrder ", sortOrder);
   // console.log(TAG + " sortField ", sortField);
-  console.log(TAG + " selectedData ", selectedData);
+  // console.log(TAG + " selectedData ", selectedData);
+  console.log(TAG + " selectedRowKeys ", selectedRowKeys);
 
 
   return (
@@ -408,6 +476,24 @@ const DeliveryTable = () => {
             >Apply Filter</Button>
           </div>
 
+          <div className='ms-3'>
+            <Button
+              type="primary"
+              disabled={selectedRowKeys?.length ? false : true}
+              // disabled={}
+              onClick={showConfirm}
+            >Delete</Button>
+          </div>
+
+          <div className='ms-3'>
+            <Button
+              type="primary"
+              disabled={loader || rowData?.length ? false : true}
+              // disabled={}
+              onClick={exportOp}
+            >Export</Button>
+          </div>
+
         </div>
 
         <div className=''>
@@ -417,6 +503,7 @@ const DeliveryTable = () => {
             dataSource={rowData || []}
             columns={columns}
             onChange={handleTableChange}
+            rowSelection={rowSelection}
           // onRow={(record) => {
           //   return {
           //     onClick: (event) => {
