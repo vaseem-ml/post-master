@@ -174,6 +174,34 @@ contextBridge.exposeInMainWorld('getDeliveryData', {
   },
 });
 
+contextBridge.exposeInMainWorld('deleteDelivery', {
+  deleteCall: async (payload: any, url: string) => {
+    ipcRenderer.send('deleteDelivery', payload);
+  },
+  receiveMessage: (callback: any) => {
+    ipcRenderer.on('delete-delivery-success', (event, response) => {
+      callback(response);
+    });
+    ipcRenderer.on('delete-delivery-error', (event, response) => {
+      callback(response);
+    });
+  },
+});
+
+contextBridge.exposeInMainWorld('updateDelivery', {
+  updateCall: async (payload: any, url: string) => {
+    ipcRenderer.send('updateDelivery', payload);
+  },
+  receiveMessage: (callback: any) => {
+    ipcRenderer.on('update-delivery-success', (event, response) => {
+      callback(response);
+    });
+    ipcRenderer.on('update-delivery-error', (event, response) => {
+      callback(response);
+    });
+  },
+});
+
 
 // ----------------------------------------------------------------------
 

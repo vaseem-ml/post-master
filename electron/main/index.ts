@@ -83,9 +83,9 @@ async function createWindow() {
     win.loadFile(indexHtml)
   }
 
-    // win.loadURL(VITE_DEV_SERVER_URL)
-    // Open devTool if the app is not packaged
-    // win.webContents.openDevTools()
+  // win.loadURL(VITE_DEV_SERVER_URL)
+  // Open devTool if the app is not packaged
+  // win.webContents.openDevTools()
 
   // win.loadFile(indexHtml)
 
@@ -180,10 +180,26 @@ ipcMain.on('deliveryAdd', async (event, payload) => {
 
   try {
 
-    console.log("addding delivery data+++++++++++++++++=======")
-    const docs = await delivery.insertMany(payload, { ordered: false });
-    // console.log('Bulk insert successful:', docs);
+    // console.log("addding delivery data+++++++++++++++++=======")
+    // const docs = await delivery.insertMany(payload, { ordered: false });
+    // // console.log('Bulk insert successful:', docs);
+    // event.reply('delivery-add-success', JSON.stringify({ status: true, data: docs }));
+
+
+
+
+    const bulkOps = payload.map((item: any) => ({
+      updateOne: {
+        filter: { article: item.article }, // Check if the article already exists
+        update: { $set: item },             // If found, update the document with new values
+        upsert: true                        // If not found, insert the new document
+      }
+    }));
+
+    // Perform the bulk operation
+    const docs = await delivery.bulkWrite(bulkOps, { ordered: false });
     event.reply('delivery-add-success', JSON.stringify({ status: true, data: docs }));
+
   } catch (err) {
     // console.log('Error during bulk insert:', err);
     event.reply('delivery-add-error', JSON.stringify({ status: false, data: err }));
@@ -193,8 +209,8 @@ ipcMain.on('deliveryAdd', async (event, payload) => {
 
 ipcMain.on('getMasterData', async (event, filter) => {
 
-  console.log("get master data called");
-  console.log(filter);
+  // console.log("get master data called");
+  // console.log(filter);
 
   // let cond = { company: Mongoose.Types.ObjectId(filter.company) }
   let cond = {};
@@ -304,25 +320,40 @@ ipcMain.on('getMasterData', async (event, filter) => {
 
 });
 
-ipcMain.on('delete', async (event, filter) => {
-  console.log('delete function is calling+++++++++======', filter)
-  const result = await delivery.deleteMany(filter.ids);
 
-  event.reply('delete-response', JSON.stringify({ status: true, data: {} }));
+ipcMain.on('deleteDelivery', async (event, filter) => {
+  // console.log('delete function is calling+++++++++======', filter);
+  // console.log('delete function is calling+++++++++======', filter.ids);
 
+  try {
+    const result = await delivery.deleteMany({ _id: filter.ids });
+    event.reply('delete-delivery-success', JSON.stringify({ status: true, data: result }));
+  } catch (error: any) {
+    console.log('error+++++++++======', error);
+    event.reply('delete-delivery-error', JSON.stringify({ status: false, data: error }));
+  }
+
+  // event.reply('delete-delivery-error', JSON.stringify({ status: false, data: "error" }));
 
 
 });
 
-ipcMain.on('update', async (event, filter) => {
 
-  console.log('update function is calling++++++++=======', filter)
-  const result = await delivery.updateMany(filter.cond, filter.updateData);
+ipcMain.on('updateDelivery', async (event, filter) => {
 
-  event.reply('update-response', JSON.stringify({ status: true, data: {} }));
+  // const { article, updatedStatus } = filter;
+  // console.log("get delivery data called");
+  // console.log(filter);
 
+  try {
+    const result = await delivery.updateOne({ article: filter?.article }, { status: filter?.status });
+    event.reply('update-delivery-success', JSON.stringify({ status: true, data: result }));
+  } catch (error: any) {
+    console.log('error+++++++++======', error);
+    event.reply('update-delivery-error', JSON.stringify({ status: false, data: error }));
+  }
 
-
+  // event.reply('update-delivery-error', JSON.stringify({ status: false, data: "error" }));
 
 });
 
@@ -502,25 +533,25 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
 
     const mergedData = allItems[0].data.map((delivery: any) => {
-      const matchingMaster:any = masterData.find(master => master.facility_id === delivery.book_ofc);
+      const matchingMaster: any = masterData.find(master => master.facility_id === delivery.book_ofc);
       const days = matchingMaster['d2'] || 3;
-      const edd = moment(delivery['book_date']).add(parseInt(days)-1, 'days').toDate();
+      const edd = moment(delivery['book_date']).add(parseInt(days) - 1, 'days').toDate();
       const remainDays = moment(edd).diff(delivery.event_date, 'days');
       let exceeded_days = 0
-      if (remainDays<0) {
+      if (remainDays < 0) {
         exceeded_days = Math.abs(remainDays)
       }
-      
-      console.log('thiss is remain days+++++++=', remainDays)
-      let color=""
-      if(remainDays>=0 && delivery.status=="Item Delivered") {
-        color="green"
-      } else if (remainDays<0 && remainDays>-2 && delivery.status!="Item Delivered") {
-        color="orange"
-      } else if(remainDays<-1 && delivery.status!="Item Delivered") {
-        color="red"
-      } else if(remainDays<=0 && delivery.dest_ofc_id!=delivery.office_id && delivery.status!="Item Delivered") {
-        color="yellow"
+
+      // console.log('thiss is remain days+++++++=', remainDays)
+      let color = ""
+      if (remainDays >= 0 && delivery.status == "Item Delivered") {
+        color = "green"
+      } else if (remainDays < 0 && remainDays > -2 && delivery.status != "Item Delivered") {
+        color = "orange"
+      } else if (remainDays < -1 && delivery.status != "Item Delivered") {
+        color = "red"
+      } else if (remainDays <= 0 && delivery.dest_ofc_id != delivery.office_id && delivery.status != "Item Delivered") {
+        color = "yellow"
       }
       return {
         ...delivery, // Plain object, no need for toObject()
@@ -552,7 +583,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     holdVal = [];
   }
 
-  console.log(allItems[0]['data'])
+  // console.log(allItems[0]['data']);
 
 
 

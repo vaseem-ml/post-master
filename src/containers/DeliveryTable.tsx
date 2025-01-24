@@ -184,42 +184,52 @@ const DeliveryTable = () => {
 
   async function updateOp() {
 
-    setLoader(true);
-    await window.getDeliveryData.getData(statusToUpdate, "dummyurl");
+    // console.log(TAG + " update call ", selectedData);
+    // console.log(TAG + " statusToUpdate ", statusToUpdate);
+    const updateObj = {
+      article: selectedData?.article,
+      status: statusToUpdate
+    }
+    // setLoader(true);
+    await window.updateDelivery.updateCall(updateObj, "dummyurl");
 
-    // window.getDeliveryData.receiveMessage((response: any) => {
-    //   const { status, data } = JSON.parse(response);
-    //   console.log("getDeliveryData status", status);
-    //   console.log("getDeliveryData data", data);
-    //   if (status == true) {
-    //     message.success("Updated.");
-    //   } else {
-    //     message.error("Something went wrong while fetching delivery data.");
-    //     message.error(JSON.stringify(data));
-    //   }
-    // });
-    setEditModal(false);
-    setLoader(false);
+    window.updateDelivery.receiveMessage((response: any) => {
+      const { status, data } = JSON.parse(response);
+      // console.log("updateDelivery status", status);
+      // console.log("updateDelivery data", data);
+      if (status == true) {
+        message.success("Updated.");
+      } else {
+        message.error("Something went wrong while updating.");
+      }
+      setEditModal(false);
+      setSelectedData(null);
+      setStatusToUpdate(undefined);
+      callDataSeeker(undefined, undefined);
+    });
+
   }
 
   async function deleteOp() {
 
     setLoader(true);
-    // await window.getDeliveryData.getData(statusToUpdate, "dummyurl");
+    // console.log(TAG + " delete call ", selectedRowKeys);
+    await window.deleteDelivery.deleteCall({ ids: selectedRowKeys }, "dummyurl");
 
-    // window.getDeliveryData.receiveMessage((response: any) => {
-    //   const { status, data } = JSON.parse(response);
-    //   console.log("getDeliveryData status", status);
-    //   console.log("getDeliveryData data", data);
-    //   if (status == true) {
-    //     message.success("Updated.");
-    //   } else {
-    //     message.error("Something went wrong while fetching delivery data.");
-    //     message.error(JSON.stringify(data));
-    //   }
-    // });
-    setSelectedRowKeys([]);
-    callDataSeeker(undefined, undefined);
+    window.deleteDelivery.receiveMessage((response: any) => {
+      const { status, data } = JSON.parse(response);
+      // console.log("getDeliveryData status", status);
+      // console.log("getDeliveryData data", data);
+      if (status == true) {
+        message.success("Deleted.");
+        callDataSeeker(undefined, undefined);
+        setSelectedRowKeys([]);
+      } else {
+        message.error("Something went wrong while deleting.");
+        // message.error(JSON.stringify(data));
+        setLoader(false);
+      }
+    });
   }
 
   async function exportOp() {
@@ -292,9 +302,10 @@ const DeliveryTable = () => {
       dataIndex: "status",
       ellipsis: false,
       width: 200,
-      render: (status: string) => {
+      render: (status: string, row: any) => {
         return (
-          <span className='w-fit'>{status ? <Tag color={deliveryStatusUi(status).color} > {status} </Tag> : "-"}</span>
+          // <span className='w-fit'>{status ? <Tag color={deliveryStatusUi(status).color} > {status} </Tag> : "-"}</span>
+          <span className='w-fit'>{status ? <Tag color={row?.color || ""} > {status} </Tag> : "-"}</span>
           // <Tag />
         );
       },
@@ -331,37 +342,38 @@ const DeliveryTable = () => {
         );
       },
     },
+    {
+      title: "EDD",
+      dataIndex: "edd",
+      ellipsis: false,
+      render: (edd: string) => {
+        return (
+          <span>{edd || "-"}</span>
+        );
+      },
+    },
+    {
+      title: "Exceeded days",
+      dataIndex: "exceeded_days",
+      ellipsis: false,
+      render: (exceeded_days: string, row: any) => {
+        return (
+          // <span>{esitCal(row)}</span>
+          <span>{exceeded_days}</span>
+        );
+      },
+    },
     // {
-    //   title: "RTS",
-    //   dataIndex: "rts",
+    //   title: "Created At",
+    //   dataIndex: "createdAt",
     //   ellipsis: false,
-    //   render: (rts: string) => {
+    //   render: (createdAt: string) => {
     //     return (
-    //       <span>{rts || "-"}</span>
+    //       <span>{createdAt || "-"}</span>
     //     );
     //   },
+    //   sorter: true
     // },
-    {
-      title: "Estimated Date",
-      dataIndex: "rts",
-      ellipsis: false,
-      render: (rts: string, row: any) => {
-        return (
-          <span>{esitCal(row)}</span>
-        );
-      },
-    },
-    {
-      title: "Created At",
-      dataIndex: "createdAt",
-      ellipsis: false,
-      render: (createdAt: string) => {
-        return (
-          <span>{createdAt || "-"}</span>
-        );
-      },
-      sorter: true
-    },
     {
       title: "Action",
       dataIndex: "action",
@@ -373,7 +385,7 @@ const DeliveryTable = () => {
             <span className='' onClick={() => { setSelectedData(row); setIsModalOpen(true); }}>
               <Button shape="circle" icon={<EyeOutlined />} />
             </span>
-            <span className='ms-2' onClick={() => { setSelectedData(row); setEditModal(true); }}>
+            <span className='ms-2' onClick={() => { setSelectedData(row); setStatusToUpdate(undefined); setEditModal(true); }}>
               <Button shape="circle" icon={<EditOutlined />} />
             </span>
             {/* <span className='ms-2' onClick={() => { setSelectedData(row); showConfirm(); }}>
@@ -425,7 +437,8 @@ const DeliveryTable = () => {
   // console.log(TAG + " sortOrder ", sortOrder);
   // console.log(TAG + " sortField ", sortField);
   // console.log(TAG + " selectedData ", selectedData);
-  console.log(TAG + " selectedRowKeys ", selectedRowKeys);
+  // console.log(TAG + " selectedRowKeys ", selectedRowKeys);
+  // console.log(TAG + " statusToUpdate ", statusToUpdate);
 
 
   return (
@@ -564,11 +577,16 @@ const DeliveryTable = () => {
                 className='w-[200px]'
                 showSearch
                 placeholder="Select status"
+
                 optionFilterProp="label"
                 // onSearch={onSearch}
-                onChange={(val: any) => setStatusToUpdate(val?.value)}
+                onChange={(val: any) => setStatusToUpdate(val)}
                 options={deliveryStatusDropOpt}
-                value={statusToUpdate}
+                value={statusToUpdate || null}
+                id="caller"
+                key="caller"
+                defaultValue={null}
+              // selected={}
               />
             </div>
             <div className='ms-3'>
