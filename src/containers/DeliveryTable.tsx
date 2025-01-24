@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
-import { Pagination, message, Button, Spin, Table, Select, DatePicker, Modal, Input } from 'antd';
+import { Pagination, message, Button, Spin, Table, Select, DatePicker, Modal, Input, Tag } from 'antd';
 import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 
-import { deliveryStatusDropOpt } from '../utils/utils';
+import { deliveryStatusDropOpt, deliveryStatusUi } from '../utils/utils';
 import { isEmpty } from 'lodash';
 
 const TAG = "DeliveryTable: ";
@@ -224,9 +224,11 @@ const DeliveryTable = () => {
       title: "STATUS",
       dataIndex: "status",
       ellipsis: false,
+      width: 200,
       render: (status: string) => {
         return (
-          <span>{status || "-"}</span>
+          <span className='w-fit'>{status ? <Tag color={deliveryStatusUi(status).color} > {status} </Tag> : "-"}</span>
+          // <Tag />
         );
       },
       sorter: true

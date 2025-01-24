@@ -211,6 +211,52 @@ export const deliveryStatus = [
   "Item Redirect",
   "Item Return"
 ]
+export const deliveryStatusUi = (status: string): any => {
+  if (status === "Bag Closed") {
+    return { color: "magenta" }
+  }
+  if (status === "Bag Dispatch Cancel") {
+    return { color: "red" }
+  }
+  if (status === "Bag Dispatched") {
+    return { color: "volcano" }
+  }
+  if (status === "Bag Loaded into Another Bag") {
+    return { color: "orange" }
+  }
+  if (status === "Bag Opened") {
+    return { color: "gold" }
+  }
+  if (status === "Bag Received") {
+    return { color: "lime" }
+  }
+  if (status === "Bag Received At Destination") {
+    return { color: "green" }
+  }
+  if (status === "Item Beat Dispatch") {
+    return { color: "cyan" }
+  }
+  if (status === "Item Delivered") {
+    return { color: "blue" }
+  }
+  if (status === "Item Dispatched to BO") {
+    return { color: "geekblue" }
+  }
+  if (status === "Item Handled Manually") {
+    return { color: "purple" }
+  }
+  if (status === "Item OnHold") {
+    return { color: "#2db7f5" }
+  }
+  if (status === "Item Redirect") {
+    return { color: "#87d068" }
+  }
+  if (status === "Item Return") {
+    return { color: "#108ee9" }
+  } else {
+    return { color: "" }
+  }
+}
 
 export const deliveryStatusDropOpt = [
   { label: "Bag Closed", value: "Bag Closed" },
@@ -228,3 +274,5 @@ export const deliveryStatusDropOpt = [
   { label: "Item Redirect", value: "Item Redirect" },
   { label: "Item Return", value: "Item Return" }
 ]
+
+
