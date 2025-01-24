@@ -447,8 +447,12 @@ ipcMain.on("getMasterData", async (event, filter) => {
   event.reply("get-master-success", JSON.stringify({ status: true, data: holdVal }));
 });
 ipcMain.on("delete", async (event, filter) => {
+  console.log("delete function is calling+++++++++======", filter);
+  await delivery.deleteMany(filter.ids);
+  event.reply("delete-response", JSON.stringify({ status: true, data: {} }));
 });
 ipcMain.on("update", async (event, filter) => {
+  console.log("update function is calling++++++++=======", filter);
 });
 ipcMain.on("getDeliveryData", async (event, filter) => {
   console.log("get delivery data called");

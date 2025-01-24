@@ -126,17 +126,17 @@ const DeliveryTable = () => {
     setLoader(true);
     // await window.getDeliveryData.getData(statusToUpdate, "dummyurl");
 
-    // window.getDeliveryData.receiveMessage((response: any) => {
-    //   const { status, data } = JSON.parse(response);
-    //   console.log("getDeliveryData status", status);
-    //   console.log("getDeliveryData data", data);
-    //   if (status == true) {
-    //     message.success("Updated.");
-    //   } else {
-    //     message.error("Something went wrong while fetching delivery data.");
-    //     message.error(JSON.stringify(data));
-    //   }
-    // });
+    window.getDeliveryData.receiveMessage((response: any) => {
+      const { status, data } = JSON.parse(response);
+      console.log("getDeliveryData status", status);
+      console.log("getDeliveryData data", data);
+      if (status == true) {
+        message.success("Updated.");
+      } else {
+        message.error("Something went wrong while fetching delivery data.");
+        message.error(JSON.stringify(data));
+      }
+    });
     setEditModal(false);
     setLoader(false);
   }
@@ -335,7 +335,7 @@ const DeliveryTable = () => {
 
   const ObjectDisplay = ({ data }: any) => {
     return (
-      <div className="max-w-md mx-auto bg-white shadow-md rounded-md p-6">
+      <div className="max-w-md p-6 mx-auto bg-white rounded-md shadow-md">
         {Object.entries(data).map(([key, value]: any) => (
           <>
             {key !== "masterData" ?
@@ -428,7 +428,7 @@ const DeliveryTable = () => {
           />
         </div>
 
-        <div className='mt-5 flex justify-center'>
+        <div className='flex justify-center mt-5'>
           <Pagination
             current={rowMeta?.page || 0}
             pageSize={rowMeta?.limit || 10}
@@ -455,7 +455,7 @@ const DeliveryTable = () => {
           <div className='mt-10'>
             <ObjectDisplay data={selectedData} />
           </div>
-          <div className='mt-3 flex justify-end'>
+          <div className='flex justify-end mt-3'>
             <Button
               type="primary"
               disabled={loader}
