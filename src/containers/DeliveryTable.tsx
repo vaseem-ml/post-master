@@ -333,22 +333,18 @@ const DeliveryTable = () => {
 
 
 
-  const handleOk = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
-
   const ObjectDisplay = ({ data }: any) => {
     return (
       <div className="max-w-md mx-auto bg-white shadow-md rounded-md p-6">
         {Object.entries(data).map(([key, value]: any) => (
-          <div key={key} className="flex justify-between py-2 border-b border-gray-200">
-            <span className="font-bold text-gray-700">{key}:</span>
-            <span className="text-gray-600">{value}</span>
-          </div>
+          <>
+            {key !== "masterData" ?
+              <div key={key} className="flex justify-between py-2 border-b border-gray-200">
+                <span className="font-bold text-gray-700">{key}:</span>
+                <span className="text-gray-600">{value}</span>
+              </div>
+              : ""}
+          </>
         ))}
       </div>
     );

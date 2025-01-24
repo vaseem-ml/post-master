@@ -24,13 +24,19 @@ import delivery from './controllers/delivery.controller';
 //
 process.env.APP_ROOT = path.join(__dirname, '../..')
 
+console.log("process process")
+console.log(process.env.APP_ROOT)
+
+
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
-export const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
+export const VITE_DEV_SERVER_URL: any = process.env.VITE_DEV_SERVER_URL
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST
+
+
 
 // Disable GPU Acceleration for Windows 7
 if (os.release().startsWith('6.1')) app.disableHardwareAcceleration()
@@ -46,6 +52,11 @@ if (!app.requestSingleInstanceLock()) {
 let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
 const indexHtml = path.join(RENDERER_DIST, 'index.html')
+console.log("preload ", preload)
+console.log("indexHtml ", indexHtml)
+console.log("RENDERER_DIST ", RENDERER_DIST)
+console.log("VITE_DEV_SERVER_URL ", VITE_DEV_SERVER_URL)
+console.log("process.env.VITE_PUBLIC ", process.env.VITE_PUBLIC)
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -69,6 +80,13 @@ async function createWindow() {
   } else {
     win.loadFile(indexHtml)
   }
+
+    // win.loadURL(VITE_DEV_SERVER_URL)
+    // Open devTool if the app is not packaged
+    // win.webContents.openDevTools()
+
+  // win.loadFile(indexHtml)
+
 
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {

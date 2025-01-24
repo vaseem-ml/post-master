@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { HashRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faUpload, faTable, faAddressBook, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
@@ -16,6 +16,14 @@ import DeliveryTable from './pages/DeliveryTable';
 import './index.css';
 
 const App = () => {
+
+  useEffect(() => {
+    // Ensure the initial route is set correctly
+    if (window.location.pathname !== '/') {
+      window.history.pushState({}, '', '/');
+    }
+  }, []);
+
   return (
     <Router>
       <div className="min-h-screen flex">
