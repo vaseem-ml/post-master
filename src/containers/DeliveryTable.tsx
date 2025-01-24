@@ -185,7 +185,7 @@ const DeliveryTable = () => {
   async function updateOp() {
 
     setLoader(true);
-    // await window.getDeliveryData.getData(statusToUpdate, "dummyurl");
+    await window.getDeliveryData.getData(statusToUpdate, "dummyurl");
 
     // window.getDeliveryData.receiveMessage((response: any) => {
     //   const { status, data } = JSON.parse(response);
