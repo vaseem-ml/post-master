@@ -166,13 +166,26 @@ ipcMain.handle('open-win', (_, arg) => {
 ipcMain.on('login', async (event, payload) => {
 
   try {
-    const docs = await master.insertMany(payload, { ordered: false });
+    // const docs = await master.insertMany(payload, { ordered: false });
+
+    const bulkOps = payload.map((item: any) => ({
+      updateOne: {
+        filter: { article: item.article }, // Check if the article already exists
+        update: { $set: item },             // If found, update the document with new values
+        upsert: true                        // If not found, insert the new document
+      }
+    }));
+
+    // Perform the bulk operation
+    const docs = await master.bulkWrite(bulkOps, { ordered: false });
+
     // console.log('Bulk insert successful:', docs);
     event.reply('login-success', JSON.stringify({ status: true, data: docs }));
   } catch (err) {
     // console.log('Error during bulk insert:', err);
     event.reply('login-error', JSON.stringify({ status: false, data: err }));
   }
+
 
 });
 
@@ -320,7 +333,6 @@ ipcMain.on('getMasterData', async (event, filter) => {
 
 });
 
-
 ipcMain.on('deleteDelivery', async (event, filter) => {
   // console.log('delete function is calling+++++++++======', filter);
   // console.log('delete function is calling+++++++++======', filter.ids);
@@ -337,7 +349,6 @@ ipcMain.on('deleteDelivery', async (event, filter) => {
 
 
 });
-
 
 ipcMain.on('updateDelivery', async (event, filter) => {
 

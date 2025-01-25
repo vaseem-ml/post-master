@@ -4324,7 +4324,17 @@ ipcMain.handle("open-win", (_, arg) => {
 });
 ipcMain.on("login", async (event, payload) => {
   try {
-    const docs = await master.insertMany(payload, { ordered: false });
+    const bulkOps = payload.map((item) => ({
+      updateOne: {
+        filter: { article: item.article },
+        // Check if the article already exists
+        update: { $set: item },
+        // If found, update the document with new values
+        upsert: true
+        // If not found, insert the new document
+      }
+    }));
+    const docs = await master.bulkWrite(bulkOps, { ordered: false });
     event.reply("login-success", JSON.stringify({ status: true, data: docs }));
   } catch (err) {
     event.reply("login-error", JSON.stringify({ status: false, data: err }));
