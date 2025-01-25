@@ -4593,7 +4593,7 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
     const masterData = await master.find({ facility_id: { $in: uniqueBookOfcIds } });
     const mergedData = allItems[0].data.map((delivery2) => {
       const matchingMaster = masterData.find((master2) => master2.facility_id === delivery2.book_ofc);
-      const days2 = matchingMaster["d2"] || 3;
+      const days2 = matchingMaster ? matchingMaster["d2"] || 3 : 3;
       const edd = hooks(delivery2["book_date"]).add(parseInt(days2) - 1, "days").toDate();
       const remainDays = hooks(edd).diff(delivery2.event_date, "days");
       let exceeded_days = 0;
@@ -4615,7 +4615,7 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
         // Plain object, no need for toObject()
         edd,
         color,
-        d: matchingMaster["d2"],
+        d: days2,
         exceeded_days
       };
     });
