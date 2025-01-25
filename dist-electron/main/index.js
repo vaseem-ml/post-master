@@ -54,15 +54,15 @@ function startDownload(callback, complete) {
 }
 const masterSchema = new Schema(
   {
-    pincode: {
-      type: String,
-      allownull: true,
-      required: false
-    },
     facility_id: {
       type: String,
       unique: true,
       required: true
+    },
+    pincode: {
+      type: String,
+      allownull: true,
+      required: false
     },
     booking_office: {
       type: String,
@@ -4326,15 +4326,12 @@ ipcMain.on("login", async (event, payload) => {
   try {
     const bulkOps = payload.map((item) => ({
       updateOne: {
-        filter: { article: item.article },
-        // Check if the article already exists
+        filter: { facility_id: item.facility_id },
         update: { $set: item },
-        // If found, update the document with new values
         upsert: true
-        // If not found, insert the new document
       }
     }));
-    const docs = await master.bulkWrite(bulkOps, { ordered: false });
+    const docs = await master.bulkWrite(bulkOps);
     event.reply("login-success", JSON.stringify({ status: true, data: docs }));
   } catch (err) {
     event.reply("login-error", JSON.stringify({ status: false, data: err }));

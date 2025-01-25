@@ -164,20 +164,22 @@ ipcMain.handle('open-win', (_, arg) => {
 
 
 ipcMain.on('login', async (event, payload) => {
+  // console.log('payload payload:', payload);
 
   try {
     // const docs = await master.insertMany(payload, { ordered: false });
 
     const bulkOps = payload.map((item: any) => ({
       updateOne: {
-        filter: { article: item.article }, // Check if the article already exists
-        update: { $set: item },             // If found, update the document with new values
-        upsert: true                        // If not found, insert the new document
+        filter: { facility_id: item.facility_id },
+        update: { $set: item },
+        upsert: true
       }
     }));
 
     // Perform the bulk operation
-    const docs = await master.bulkWrite(bulkOps, { ordered: false });
+    const docs = await master.bulkWrite(bulkOps);
+    // const docs = await master.bulkWrite(bulkOps, { ordered: false });
 
     // console.log('Bulk insert successful:', docs);
     event.reply('login-success', JSON.stringify({ status: true, data: docs }));
@@ -197,8 +199,6 @@ ipcMain.on('deliveryAdd', async (event, payload) => {
     // const docs = await delivery.insertMany(payload, { ordered: false });
     // // console.log('Bulk insert successful:', docs);
     // event.reply('delivery-add-success', JSON.stringify({ status: true, data: docs }));
-
-
 
 
     const bulkOps = payload.map((item: any) => ({
