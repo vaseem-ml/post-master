@@ -183,6 +183,71 @@ const DeliveryTable = () => {
 
   }
 
+  async function callExportSeeker(cpage: any, cpagesize: any) {
+    console.log("callExportSeeker got called");
+
+    let startDate = null, endDate = null, status = null, filter = null, searchStr = null;
+    if (isEmpty(dates) == false && dates?.length > 0 && dates?.[0] !== "" && dates?.[1] !== "") {
+      startDate = dayjs(dates[0], "DD-MM-YYYY").format("YYYY-MM-DD");
+      endDate = dayjs(dates[1], "DD-MM-YYYY").format("YYYY-MM-DD");
+    }
+
+    if (isEmpty(statusFilter) == false) {
+      status = statusFilter;
+    }
+
+    // if (isEmpty(status) == false) {
+    //   filter = [{ status: status }];
+    // }
+
+    if (searchString !== "") {
+      searchStr = searchString;
+    }
+
+    let queryTable = {
+      page: cpage ? cpage : payload?.page,
+      limit: cpagesize ? cpagesize : payload?.page_size,
+      startDate: startDate,
+      endDate: endDate,
+      status: status,
+      search: searchStr,
+    }
+
+    if (sortField == "" || sortField == undefined) {
+      status = sortField;
+      Object.assign(queryTable, { sort: null })
+    } else {
+      Object.assign(queryTable, { sort: { [sortField]: sortOrder === "asc" ? 1 : -1 } })
+    }
+
+    console.log(TAG + "queryTable", queryTable);
+
+    await window.getExportData.getData(queryTable, "dummyurl");
+
+    window.getExportData.receiveMessage((response: any) => {
+      const { status, data } = JSON.parse(response);
+      // console.log("getDeliveryData status", status);
+      // console.log("getDeliveryData data", data);
+      if (status == true) {
+        // message.success("Delivery data fetched.");
+          const exportToCSV = (data: any, filename: any) => {
+            const csv = Papa.unparse(data);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            saveAs(blob, `${filename}.csv`);
+            setLoader(false);
+          };
+          exportToCSV(data?.data, "delivery_data");
+      } else {
+        message.error("Something went wrong while fetching delivery data.");
+        message.error(JSON.stringify(data));
+        setLoader(false);
+      }
+
+    });
+
+
+  }
+
   async function updateOp() {
 
     // console.log(TAG + " update call ", selectedData);
