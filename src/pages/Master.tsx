@@ -51,10 +51,10 @@ function Master() {
       // console.log("api call response");
       // console.log(response);
       const { status, data } = JSON.parse(response);
-      // console.log("status", status);
-      // console.log("data", data);
+      console.log("status", status);
+      console.log("data", data);
       message.success("Details inserted.");
-      navigate(0);
+      // navigate(0);
 
       // if (status == true) {
       //   message.success("Details inserted.");

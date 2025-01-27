@@ -157,8 +157,9 @@ const DeliveryTable = () => {
       console.log("getDeliveryData data", data);
       if (status == true) {
         // message.success("Delivery data fetched.");
-
-        if (cpage !== undefined && cpagesize !== undefined) {
+        console.log("cpage cpage cpage", cpage);
+        console.log("cpagesize cpagesize cpagesize", cpagesize);
+        if (cpage == 1 && cpagesize == 10000000) {
           const exportToCSV = (data: any, filename: any) => {
             const csv = Papa.unparse(data);
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -199,13 +200,13 @@ const DeliveryTable = () => {
       // console.log("updateDelivery data", data);
       if (status == true) {
         message.success("Updated.");
+        callDataSeeker(undefined, undefined);
       } else {
         message.error("Something went wrong while updating.");
       }
       setEditModal(false);
       setSelectedData(null);
       setStatusToUpdate(undefined);
-      callDataSeeker(undefined, undefined);
     });
 
   }

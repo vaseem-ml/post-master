@@ -15,6 +15,8 @@ import DeliveryTable from './pages/DeliveryTable';
 
 import './index.css';
 
+import logoimg from './assets/logo.svg';
+
 const App = () => {
 
   useEffect(() => {
@@ -28,6 +30,9 @@ const App = () => {
     <Router>
       <div className="min-h-screen flex">
         <nav className="w-[200px] bg-gray-800 text-white flex flex-col">
+          <div className="flex items-center justify-center p-4">
+            <img src={logoimg} alt="Logo" className="h-12 w-12" />
+          </div>
           <ul className="space-y-4 p-4 list-none">
             <li>
               <Link to="/" className="flex items-center space-x-2 hover:bg-gray-700 p-2 rounded">

@@ -3,16 +3,17 @@ import { model, Schema } from 'mongoose';
 
 const masterSchema = new Schema(
 	{
-		pincode: {
-			type: String,
-			allownull: true,
-			required: false,
-		},
 		facility_id: {
 			type: String,
 			unique: true,
 			required: true,
 		},
+		pincode: {
+			type: String,
+			allownull: true,
+			required: false,
+		},
+
 		booking_office: {
 			type: String,
 			allownull: true,

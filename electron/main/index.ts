@@ -164,15 +164,30 @@ ipcMain.handle('open-win', (_, arg) => {
 
 
 ipcMain.on('login', async (event, payload) => {
+  // console.log('payload payload:', payload);
 
   try {
-    const docs = await master.insertMany(payload, { ordered: false });
+    // const docs = await master.insertMany(payload, { ordered: false });
+
+    const bulkOps = payload.map((item: any) => ({
+      updateOne: {
+        filter: { facility_id: item.facility_id },
+        update: { $set: item },
+        upsert: true
+      }
+    }));
+
+    // Perform the bulk operation
+    const docs = await master.bulkWrite(bulkOps);
+    // const docs = await master.bulkWrite(bulkOps, { ordered: false });
+
     // console.log('Bulk insert successful:', docs);
     event.reply('login-success', JSON.stringify({ status: true, data: docs }));
   } catch (err) {
     // console.log('Error during bulk insert:', err);
     event.reply('login-error', JSON.stringify({ status: false, data: err }));
   }
+
 
 });
 
@@ -184,8 +199,6 @@ ipcMain.on('deliveryAdd', async (event, payload) => {
     // const docs = await delivery.insertMany(payload, { ordered: false });
     // // console.log('Bulk insert successful:', docs);
     // event.reply('delivery-add-success', JSON.stringify({ status: true, data: docs }));
-
-
 
 
     const bulkOps = payload.map((item: any) => ({
@@ -320,7 +333,6 @@ ipcMain.on('getMasterData', async (event, filter) => {
 
 });
 
-
 ipcMain.on('deleteDelivery', async (event, filter) => {
   // console.log('delete function is calling+++++++++======', filter);
   // console.log('delete function is calling+++++++++======', filter.ids);
@@ -337,7 +349,6 @@ ipcMain.on('deleteDelivery', async (event, filter) => {
 
 
 });
-
 
 ipcMain.on('updateDelivery', async (event, filter) => {
 
