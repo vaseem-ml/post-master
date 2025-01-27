@@ -429,8 +429,12 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
 
   if (filter.status !== null) {
-    // Object.assign(cond, { status: filter['status'] })
-    Object.assign(cond, { color: filter['status']})
+    Object.assign(cond, { status: filter['status'] })
+    // Object.assign(cond, { color: filter['status']})
+  }
+
+  if(filter.color) {
+    Object.assign(cond, { status: filter['status']})
   }
 
 
@@ -650,18 +654,18 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
     // console.log('all it/ems+++++++++', allItems[0].data)
 
-    allItems[0].data.map((delivery:any) => {
-      // if(delivery.exceeded_days>0) {
-        console.log('event date+++++', delivery.event_date)
-        console.log('edd+++++', delivery.edd)
-        console.log('status+++++', delivery.status)
+    // allItems[0].data.map((delivery:any) => {
+    //   // if(delivery.exceeded_days>0) {
+    //     console.log('event date+++++', delivery.event_date)
+    //     console.log('edd+++++', delivery.edd)
+    //     console.log('status+++++', delivery.status)
 
-        console.log('book+++++', delivery.book_date)
-        console.log('remain days+++++', delivery.remainDays)
-        console.log('color+++++', delivery.color)
-        console.log("===========================")
-      // }
-    })
+    //     console.log('book+++++', delivery.book_date)
+    //     console.log('remain days+++++', delivery.remainDays)
+    //     console.log('color+++++', delivery.color)
+    //     console.log("===========================")
+    //   // }
+    // })
 
     let holdVal;
     if (allItems && allItems.length) {

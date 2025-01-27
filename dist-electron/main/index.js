@@ -513,7 +513,10 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
     });
   }
   if (filter.status !== null) {
-    Object.assign(cond, { color: filter["status"] });
+    Object.assign(cond, { status: filter["status"] });
+  }
+  if (filter.color) {
+    Object.assign(cond, { status: filter["status"] });
   }
   if (filter.search) {
     Object.assign(cond, {
@@ -712,15 +715,6 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
       }
     }
   ]);
-  allItems[0].data.map((delivery2) => {
-    console.log("event date+++++", delivery2.event_date);
-    console.log("edd+++++", delivery2.edd);
-    console.log("status+++++", delivery2.status);
-    console.log("book+++++", delivery2.book_date);
-    console.log("remain days+++++", delivery2.remainDays);
-    console.log("color+++++", delivery2.color);
-    console.log("===========================");
-  });
   let holdVal;
   if (allItems && allItems.length) {
     holdVal = allItems[0];
