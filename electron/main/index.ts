@@ -379,25 +379,37 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
   let search = null;
   let sort: any = filter.sort ? filter.sort : { createdAt: -1 };
 
+  // filter.sortKey = "exceeded_days"
+  // filter.sortType = "ASC"
+  switch (filter.sortKey) {
 
-  // switch (filter.sortKey) {
+    case "book_ofc":
+      sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
+      break;
 
-  //   case "book_ofc":
-  //     sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
-  //     break;
+    case "event_date":
+      sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
+      break;
 
-  //   case "event_date":
-  //     sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
-  //     break;
+    case "status":
+      sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
+      break;
 
-  //   case "status":
-  //     sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
-  //     break;
+    case "exceeded_days":
+      sort = { "exceeded_days": filter.sortType === "ASC" ? 1 : -1 }
+      break;
 
-  //   default:
-  //     break;
+    case "edd":
+      sort = { "edd": filter.sortType === "ASC" ? 1 : -1 }
+      break;
 
-  // }
+
+    default:
+      break;
+
+  }
+
+
 
   let cond: any = {}
 
@@ -414,9 +426,18 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     })
   }
 
+
+
   if (filter.status !== null) {
     Object.assign(cond, { status: filter['status'] })
+    // Object.assign(cond, { color: filter['status']})
   }
+
+  if(filter.color) {
+    Object.assign(cond, { color: filter['color']})
+  }
+
+
 
 
   if (filter.search) {
@@ -436,18 +457,106 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     });
   }
 
+  console.log("this is condition++++++++++==========", cond)
+
 
 
   let limit = parseInt(filter.limit) || 10;
   let skip = (parseInt(filter.page) - 1) * limit || 0;
 
   const allItems: any = await delivery.aggregate([
+    
+    // { $sort: sort },
     {
-      $match: cond
+      $lookup: {
+        from: 'masters', // The name of your master collection
+        localField: 'book_ofc',
+        foreignField: 'facility_id',
+        as: 'masterData',
+      },
     },
     {
-      $sort: sort
+      $addFields: {
+        masterData: { $arrayElemAt: ['$masterData', 0] }, // Extract the first matching document
+      },
     },
+    {
+      $addFields: {
+        d: { $ifNull: ["$masterData.d2", 3]},
+        
+      }
+    },
+    {
+      $addFields: {
+        edd: {
+          $toDate: {
+            $add: [
+              { $toDate: '$book_date' },
+              { $multiply: [{ $subtract: [{ $toInt: '$d' }, 1] }, 24 * 60 * 60 * 1000] }, // Convert `$d` to a number
+            ],
+          },
+        },
+      }
+    },
+    {
+      $addFields: {
+        remainDays: {
+          $divide: [
+            {
+              $subtract: [
+                { $toLong: '$edd' },
+                { $toLong: { $toDate: '$event_date' } },
+              ],
+            },
+            1000 * 60 * 60 * 24,
+          ],
+        },
+        
+      }
+    },
+    {
+      $addFields: {
+        exceeded_days: {
+          $cond: [{ $lt: ['$remainDays', 0] }, { $abs: '$remainDays' }, 0],
+        },
+      }
+    },
+    {
+      $addFields: {
+        color: {
+          $switch: {
+            branches: [
+              {
+                case: {
+                  $and: [{ $gte: ['$remainDays', 0] }, { $eq: ['$status', 'Item Delivered'] }],
+                },
+                then: 'green',
+              },
+              {
+                case: {
+                  $and: [{ $lt: ['$remainDays', 0] }, { $gt: ['$remainDays', -2] }, { $ne: ['$status', 'Item Delivered'] }],
+                },
+                then: 'orange',
+              },
+              {
+                case: {
+                  $and: [{ $lt: ['$remainDays', -1] }, { $ne: ['$status', 'Item Delivered'] }],
+                },
+                then: 'red',
+              },
+              {
+                case: {
+                  $and: [{ $lte: ['$remainDays', 0] },  { $ne: ['$dest_ofc_id', '$office_id'] }, { $ne: ['$status', 'Item Delivered'] }],
+                },
+                then: 'yellow',
+              },
+            ],
+            default: '',
+          },
+        },
+      },
+    },
+    
     {
       $project: {
         article: 1,
@@ -486,93 +595,54 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
         status: 1,
         office_id: 1,
         office_name: 1,
-        event_date: 1,
+        event_date: { $dateToString: { format: "%Y-%m-%d", date: "$event_date" } },
         event_time: 1,
         ipvs_article_type: 1,
         bagid: 1,
         rts: 1,
         _id: 1,
-        is_deleted: 1,
-        is_active: 1,
-        createdAt: 1,
-        updatedAt: 1,
+        // is_deleted: 1,
+        // is_active: 1,
+        edd: { $dateToString: { format: "%Y-%m-%d", date: "$edd" } },
+        d: 1,
+        remainDays: 1,
+        exceeded_days: 1,
+        color: 1,
       }
     },
+    // {
+    //   $match: { color: 'red'},
+    // },
+    { $match: cond },
+    { $sort: sort },
     {
+
       $facet: {
         total: [{ $count: 'createdAt' }],
-        data: [{
-          $addFields: { _id: '$_id', }
-        }],
+        data: [
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ],
       },
     },
-    {
-      $unwind: '$total'
-    },
+    { $unwind: '$total' },
     {
       $project: {
-        data: {
-          $slice: ['$data', skip, {
-            $ifNull: [limit, '$total.createdAt']
-          }]
-        },
+        data: 1,
         meta: {
           total: '$total.createdAt',
-          limit: {
-            $literal: limit
-          },
-          page: {
-            $literal: ((skip / limit) + 1)
-          },
-          pages: {
-            $ceil: {
-              $divide: ['$total.createdAt', limit]
-            }
-          },
+          limit: { $literal: limit },
+          page: { $literal: (skip / limit) + 1 },
+          pages: { $ceil: { $divide: ['$total.createdAt', limit] } },
         },
       },
     },
+    
   ]);
-
-  // console.log("this is all items+++++++++=", allItems[0]);
-
-  let holdVal = [];
-  if (allItems && allItems?.length) {
-    const bookOfcIds = allItems[0].data.map((item: any) => item.book_ofc).filter(Boolean);
-    const uniqueBookOfcIds = [...new Set(bookOfcIds)];
-    const masterData = await master.find({ facility_id: { $in: uniqueBookOfcIds } })
-
-
-    const mergedData = allItems[0].data.map((delivery: any) => {
-      const matchingMaster: any = masterData.find(master => master.facility_id === delivery.book_ofc);
-      const days = matchingMaster ? matchingMaster["d2"] || 3 : 3;
-      const edd = moment(delivery['book_date']).add(parseInt(days) - 1, 'days').toDate();
-      const remainDays = moment(edd).diff(delivery.event_date, 'days');
-      let exceeded_days = 0
-      if (remainDays < 0) {
-        exceeded_days = Math.abs(remainDays)
-      }
-
-      // console.log('thiss is remain days+++++++=', remainDays)
-      let color = ""
-      if (remainDays >= 0 && delivery.status == "Item Delivered") {
-        color = "green"
-      } else if (remainDays < 0 && remainDays > -2 && delivery.status != "Item Delivered") {
-        color = "orange"
-      } else if (remainDays < -1 && delivery.status != "Item Delivered") {
-        color = "red"
-      } else if (remainDays <= 0 && delivery.dest_ofc_id != delivery.office_id && delivery.status != "Item Delivered") {
-        color = "yellow"
-      }
-      return {
-        ...delivery, // Plain object, no need for toObject()
-        edd: edd,
-        color: color,
-        d: days,
-        exceeded_days: exceeded_days
-      };
-      // return delivery['edd'] = matchingMaster['d2']?matchingMaster:3
-    });
 
 
     // const refinedData = allItems[0].data.map((delivery:any) => {
@@ -582,17 +652,30 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     //   console.log('delivery+++=', delivery)
     // })
 
+    // console.log('all it/ems+++++++++', allItems[0].data)
 
+    // allItems[0].data.map((delivery:any) => {
+    //   // if(delivery.exceeded_days>0) {
+    //     console.log('event date+++++', delivery.event_date)
+    //     console.log('edd+++++', delivery.edd)
+    //     console.log('status+++++', delivery.status)
+
+    //     console.log('book+++++', delivery.book_date)
+    //     console.log('remain days+++++', delivery.remainDays)
+    //     console.log('color+++++', delivery.color)
+    //     console.log("===========================")
+    //   // }
+    // })
+
+    let holdVal;
     if (allItems && allItems.length) {
-      allItems[0]["data"] = mergedData
+      
       holdVal = allItems[0];
     } else {
       holdVal = [];
     }
 
-  } else {
-    holdVal = [];
-  }
+
 
   // console.log(allItems[0]['data']);
 
