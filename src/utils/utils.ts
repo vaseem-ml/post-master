@@ -1,3 +1,5 @@
+import { saveAs } from 'file-saver';
+import Papa from 'papaparse';
 
 export const masterTableColumn = [
   "pincode",
@@ -277,3 +279,44 @@ export const deliveryStatusDropOpt = [
 
 
 
+
+export const callExportSeekerUtils = (queryTable: any) => {
+  console.log("callExportSeeker got called");
+
+  window.getExportData.getData(queryTable, "dummyurl");
+  window.getExportData.receiveMessage(async (response: any) => {
+    const { status, data } = JSON.parse(response);
+    if (status == true) {
+
+      try {
+
+        const csv = Papa.unparse(data?.data);
+        // const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        // const url = URL.createObjectURL(blob);
+        // const link = document.createElement('a');
+        // link.href = url;
+        // link.setAttribute('download', `delivery_data_${Date.now()}.csv`);
+        // document.body.appendChild(link);
+        // link.click();
+        // document.body.removeChild(link);
+        // setLoader(false);
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, `delivery_data_${Date.now()}.csv`);
+
+        // const result = await window.electronAPI.saveFile(data?.data);
+        // if (result.success) {
+        //   console.log('File saved successfully!');
+        // } else {
+        //   console.log('File save canceled.');
+        // }
+
+      }
+      catch (error) {
+      }
+
+    } else {
+    }
+  });
+
+}

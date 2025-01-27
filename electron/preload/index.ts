@@ -217,6 +217,13 @@ contextBridge.exposeInMainWorld('updateDelivery', {
 });
 
 
+contextBridge.exposeInMainWorld('electronAPI', {
+  saveFile: (data: any) => ipcRenderer.invoke('save-file', data),
+});
+
+
+
+
 // ----------------------------------------------------------------------
 
 const { appendLoading, removeLoading } = useLoading()

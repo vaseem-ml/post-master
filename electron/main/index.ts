@@ -1,10 +1,11 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import Mongoose from "mongoose";
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { connect, set } from 'mongoose';
 import os from 'node:os'
+import fs from 'fs'
 import { update } from './update'
 
 const require = createRequire(import.meta.url)
@@ -705,4 +706,357 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
 
 
+});
+
+ipcMain.on('getExportData', async (event, filter) => {
+
+  console.log("get delivery data called");
+  console.log(filter);
+
+  // let cond = { company: Mongoose.Types.ObjectId(filter.company) }
+  // let cond = {};
+
+  let search = null;
+  let sort: any = filter.sort ? filter.sort : { createdAt: -1 };
+
+  // filter.sortKey = "exceeded_days"
+  // filter.sortType = "ASC"
+  switch (filter.sortKey) {
+
+    case "book_ofc":
+      sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
+      break;
+
+    case "event_date":
+      sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
+      break;
+
+    case "status":
+      sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
+      break;
+
+    case "exceeded_days":
+      sort = { "exceeded_days": filter.sortType === "ASC" ? 1 : -1 }
+      break;
+
+    case "edd":
+      sort = { "edd": filter.sortType === "ASC" ? 1 : -1 }
+      break;
+
+
+    default:
+      break;
+
+  }
+
+
+
+  let cond: any = {}
+
+  if (filter.startDate && filter.endDate) {
+    Object.assign(cond, {
+      $and: [
+        {
+          "event_date": { $gte: new Date(filter.startDate) },
+        },
+        {
+          "event_date": { $lte: new Date(filter.endDate) },
+        },
+      ]
+    })
+  }
+
+
+
+  if (filter.status !== null) {
+    Object.assign(cond, { status: filter['status'] })
+    // Object.assign(cond, { color: filter['status']})
+  }
+
+  if(filter.color) {
+    Object.assign(cond, { color: filter['color']})
+  }
+
+
+
+
+  if (filter.search) {
+    Object.assign(cond, {
+      $or: [
+        {
+          article: {
+            $regex: '.*' + filter.search + '.*', $options: 'si'
+          }
+        },
+        {
+          book_ofc_name: {
+            $regex: '.*' + filter.search + '.*', $options: 'si'
+          }
+        },
+      ]
+    });
+  }
+
+  console.log("this is condition++++++++++==========", cond)
+
+
+
+  let limit = parseInt(filter.limit) || 10;
+  let skip = (parseInt(filter.page) - 1) * limit || 0;
+
+  const allItems: any = await delivery.aggregate([
+    
+    // { $sort: sort },
+    {
+      $lookup: {
+        from: 'masters', // The name of your master collection
+        localField: 'book_ofc',
+        foreignField: 'facility_id',
+        as: 'masterData',
+      },
+    },
+    {
+      $addFields: {
+        masterData: { $arrayElemAt: ['$masterData', 0] }, // Extract the first matching document
+      },
+    },
+    {
+      $addFields: {
+        d: { $ifNull: ["$masterData.d2", 3]},
+        
+      }
+    },
+    {
+      $addFields: {
+        edd: {
+          $toDate: {
+            $add: [
+              { $toDate: '$book_date' },
+              { $multiply: [{ $subtract: [{ $toInt: '$d' }, 1] }, 24 * 60 * 60 * 1000] }, // Convert `$d` to a number
+            ],
+          },
+        },
+      }
+    },
+    {
+      $addFields: {
+        remainDays: {
+          $divide: [
+            {
+              $subtract: [
+                { $toLong: '$edd' },
+                { $toLong: { $toDate: '$event_date' } },
+              ],
+            },
+            1000 * 60 * 60 * 24,
+          ],
+        },
+        
+      }
+    },
+    {
+      $addFields: {
+        exceeded_days: {
+          $cond: [{ $lt: ['$remainDays', 0] }, { $abs: '$remainDays' }, 0],
+        },
+      }
+    },
+    {
+      $addFields: {
+        color: {
+          $switch: {
+            branches: [
+              {
+                case: {
+                  $and: [{ $gte: ['$remainDays', 0] }, { $eq: ['$status', 'Item Delivered'] }],
+                },
+                then: 'green',
+              },
+              {
+                case: {
+                  $and: [{ $lt: ['$remainDays', 0] }, { $gt: ['$remainDays', -2] }, { $ne: ['$status', 'Item Delivered'] }],
+                },
+                then: 'orange',
+              },
+              {
+                case: {
+                  $and: [{ $lt: ['$remainDays', -1] }, { $ne: ['$status', 'Item Delivered'] }],
+                },
+                then: 'red',
+              },
+              {
+                case: {
+                  $and: [{ $lte: ['$remainDays', 0] },  { $ne: ['$dest_ofc_id', '$office_id'] }, { $ne: ['$status', 'Item Delivered'] }],
+                },
+                then: 'yellow',
+              },
+            ],
+            default: '',
+          },
+        },
+      },
+    },
+    
+    {
+      $project: {
+        article: 1,
+        booking: 1,
+        track: 1,
+        cod: 1,
+        book_ofc: 1,
+        book_ofc_name: 1,
+        dest_ofc_id: 1,
+        dest_ofc_name: 1,
+        book_id: 1,
+        article_type: 1,
+        weight: 1,
+        book_date: 1,
+        book_time: 1,
+        tariff: 1,
+        prepaid_value: 1,
+        sender_name: 1,
+        sender_city: 1,
+        sender_mobile: 1,
+        receiver_name: 1,
+        recevier_addr1: 1,
+        recevier_addr2: 1,
+        recevier_addr3: 1,
+        receiver_city: 1,
+        receiver_phone: 1,
+        receiver_pin: 1,
+        ins_value: 1,
+        customer_id: 1,
+        contract: 1,
+        value: 1,
+        service: 1,
+        emo_message: 1,
+        user_id: 1,
+        user_name: 1,
+        status: 1,
+        office_id: 1,
+        office_name: 1,
+        event_date: { $dateToString: { format: "%Y-%m-%d", date: "$event_date" } },
+        event_time: 1,
+        ipvs_article_type: 1,
+        bagid: 1,
+        rts: 1,
+        _id: 1,
+        // is_deleted: 1,
+        // is_active: 1,
+        edd: { $dateToString: { format: "%Y-%m-%d", date: "$edd" } },
+        d: 1,
+        remainDays: 1,
+        exceeded_days: 1,
+        color: 1,
+      }
+    },
+    // {
+    //   $match: { color: 'red'},
+    // },
+    { $match: cond },
+    { $sort: sort },
+    {
+
+      $facet: {
+        total: [{ $count: 'createdAt' }],
+        data: [
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ],
+      },
+    },
+    { $unwind: '$total' },
+    {
+      $project: {
+        data: 1,
+        meta: {
+          total: '$total.createdAt',
+          limit: { $literal: limit },
+          page: { $literal: (skip / limit) + 1 },
+          pages: { $ceil: { $divide: ['$total.createdAt', limit] } },
+        },
+      },
+    },
+    
+  ]);
+
+
+    // const refinedData = allItems[0].data.map((delivery:any) => {
+    //   const edd
+    //   const daysDiff = moment(delivery.book_date).diff(delivery.event_date, 'days');
+    //   console.log('days+++++++==', daysDiff)
+    //   console.log('delivery+++=', delivery)
+    // })
+
+    // console.log('all it/ems+++++++++', allItems[0].data)
+
+    // allItems[0].data.map((delivery:any) => {
+    //   // if(delivery.exceeded_days>0) {
+    //     console.log('event date+++++', delivery.event_date)
+    //     console.log('edd+++++', delivery.edd)
+    //     console.log('status+++++', delivery.status)
+
+    //     console.log('book+++++', delivery.book_date)
+    //     console.log('remain days+++++', delivery.remainDays)
+    //     console.log('color+++++', delivery.color)
+    //     console.log("===========================")
+    //   // }
+    // })
+
+    let holdVal;
+    if (allItems && allItems.length) {
+      
+      holdVal = allItems[0];
+    } else {
+      holdVal = [];
+    }
+
+
+
+  // console.log(allItems[0]['data']);
+
+
+
+
+
+
+
+
+
+  // return {
+  //   data: mergedData,
+  //   meta: { total: 1680, limit: 10, page: 1, pages: 168 }, // Adjust meta values dynamically
+  // };
+
+  event.reply('get-export-success', JSON.stringify({ status: true, data: holdVal }));
+
+  // try {
+  //   const docs = await master.insertMany(payload, { ordered: false });
+  //   // console.log('Bulk insert successful:', docs);
+  //   event.reply('get-delivery-success', JSON.stringify({ status: true, data: docs }));
+  // } catch (err) {
+  //   // console.log('Error during bulk insert:', err);
+  //   event.reply('get-delivery-error', JSON.stringify({ status: false, data: err }));
+  // }
+
+
+
+});
+
+
+ipcMain.handle('save-file', async (event, data) => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    defaultPath: 'data.json',
+    filters: [{ name: 'JSON Files', extensions: ['json'] }],
+  });
+  if (!canceled && filePath) {
+    fs.writeFileSync(filePath, data);
+    return { success: true };
+  } else {
+    return { success: false };
+  }
 });
