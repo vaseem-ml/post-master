@@ -434,7 +434,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
   }
 
   if(filter.color) {
-    Object.assign(cond, { status: filter['color']})
+    Object.assign(cond, { color: filter['color']})
   }
 
 
