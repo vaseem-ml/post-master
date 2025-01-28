@@ -483,23 +483,6 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
   console.log("get delivery data called");
   console.log(filter);
   let sort = filter.sort ? filter.sort : { createdAt: -1 };
-  switch (filter.sortKey) {
-    case "book_ofc":
-      sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-    case "event_date":
-      sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-    case "status":
-      sort = { "status": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-    case "exceeded_days":
-      sort = { "exceeded_days": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-    case "edd":
-      sort = { "edd": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-  }
   let cond = {};
   if (filter.startDate && filter.endDate) {
     Object.assign(cond, {
@@ -728,23 +711,6 @@ ipcMain.on("getExportData", async (event, filter) => {
   console.log("get delivery data called");
   console.log(filter);
   let sort = filter.sort ? filter.sort : { createdAt: -1 };
-  switch (filter.sortKey) {
-    case "book_ofc":
-      sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-    case "event_date":
-      sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-    case "status":
-      sort = { "status": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-    case "exceeded_days":
-      sort = { "exceeded_days": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-    case "edd":
-      sort = { "edd": filter.sortType === "ASC" ? 1 : -1 };
-      break;
-  }
   let cond = {};
   if (filter.startDate && filter.endDate) {
     Object.assign(cond, {

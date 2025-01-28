@@ -6,7 +6,7 @@ import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
 import { useNavigate } from 'react-router-dom';
 
-import { deliveryStatusDropOpt, deliveryStatusUi, callExportSeekerUtils } from '../utils/utils';
+import { deliveryStatusDropOpt, deliveryStatusUi, colorFilterOpt } from '../utils/utils';
 import { useEffectOnce } from '../components/update/useonc'
 import { isEmpty } from 'lodash';
 import type { TableColumnsType, TableProps } from 'antd';
@@ -19,6 +19,7 @@ const DeliveryTable = () => {
   const [rowData, setRowData] = useState<any>([]);
   const [rowMeta, setRowMeta] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<any>();
+  const [colorFilter, setColorFilter] = useState<any>();
   const [statusToUpdate, setStatusToUpdate] = useState<any>();
   const [dates, setDates] = useState<any>(['', '']);
   const [payload, setPayload] = useState({ page: 1, page_size: 10 });
@@ -148,7 +149,7 @@ const DeliveryTable = () => {
   async function callDataSeeker() {
     console.log("callDataSeeker got called");
 
-    let startDate = null, endDate = null, status = null, filter = null, searchStr = null;
+    let startDate = null, endDate = null, status = null, searchStr = null, color = null;
     if (isEmpty(dates) == false && dates?.length > 0 && dates?.[0] !== "" && dates?.[1] !== "") {
       startDate = dayjs(dates[0], "DD-MM-YYYY").format("YYYY-MM-DD");
       endDate = dayjs(dates[1], "DD-MM-YYYY").format("YYYY-MM-DD");
@@ -158,9 +159,9 @@ const DeliveryTable = () => {
       status = statusFilter;
     }
 
-    // if (isEmpty(status) == false) {
-    //   filter = [{ status: status }];
-    // }
+    if (isEmpty(colorFilter) == false) {
+      color = colorFilter;
+    }
 
     if (searchString !== "") {
       searchStr = searchString;
@@ -173,6 +174,7 @@ const DeliveryTable = () => {
       endDate: endDate,
       status: status,
       search: searchStr,
+      color: color
     }
 
     if (sortField == "" || sortField == undefined) {
@@ -206,10 +208,10 @@ const DeliveryTable = () => {
 
   }
 
-  async function callExportSeeker(cpage: any, cpagesize: any) {
+  async function callExportSeeker() {
     console.log("callExportSeeker got called");
 
-    let startDate = null, endDate = null, status = null, filter = null, searchStr = null;
+    let startDate = null, endDate = null, status = null, searchStr = null, color = null;
     if (isEmpty(dates) == false && dates?.length > 0 && dates?.[0] !== "" && dates?.[1] !== "") {
       startDate = dayjs(dates[0], "DD-MM-YYYY").format("YYYY-MM-DD");
       endDate = dayjs(dates[1], "DD-MM-YYYY").format("YYYY-MM-DD");
@@ -219,21 +221,22 @@ const DeliveryTable = () => {
       status = statusFilter;
     }
 
-    // if (isEmpty(status) == false) {
-    //   filter = [{ status: status }];
-    // }
+    if (isEmpty(colorFilter) == false) {
+      color = colorFilter;
+    }
 
     if (searchString !== "") {
       searchStr = searchString;
     }
 
     let queryTable = {
-      page: cpage ? cpage : payload?.page,
-      limit: cpagesize ? cpagesize : payload?.page_size,
+      page: 1,
+      limit: 10000000,
       startDate: startDate,
       endDate: endDate,
       status: status,
       search: searchStr,
+      color: color
     }
 
     if (sortField == "" || sortField == undefined) {
@@ -306,7 +309,7 @@ const DeliveryTable = () => {
 
   async function exportOp() {
     setLoader(true);
-    callExportSeeker(1, 10000000);
+    callExportSeeker();
   }
 
   const showConfirm = () => {
@@ -338,6 +341,7 @@ const DeliveryTable = () => {
           <span>{article || "-"}</span>
         );
       },
+      sorter: true
     },
     {
       title: "Book Ofc Name",
@@ -348,6 +352,7 @@ const DeliveryTable = () => {
           <span>{book_ofc_name || "-"}</span>
         );
       },
+      sorter: true
     },
     {
       title: "Dest Ofc Name",
@@ -391,8 +396,7 @@ const DeliveryTable = () => {
         return (
           <span>{office_name || "-"}</span>
         );
-      },
-      // sorter: true
+      }
     },
     {
       title: "Event Date",
@@ -403,6 +407,7 @@ const DeliveryTable = () => {
           <span>{event_date || "-"}</span>
         );
       },
+      sorter: true
     },
     {
       title: "BAGID",
@@ -423,6 +428,7 @@ const DeliveryTable = () => {
           <span>{edd || "-"}</span>
         );
       },
+      sorter: true
     },
     {
       title: "Exceeded days",
@@ -434,6 +440,7 @@ const DeliveryTable = () => {
           <span>{exceeded_days}</span>
         );
       },
+      sorter: true
     },
     // {
     //   title: "Created At",
@@ -540,6 +547,20 @@ const DeliveryTable = () => {
               onChange={onChange}
               options={deliveryStatusDropOpt}
               value={statusFilter}
+              allowClear={true}
+            />
+          </div>
+
+          <div className='me-3'>
+            <Select
+              className='w-[200px]'
+              showSearch
+              placeholder="Select color"
+              optionFilterProp="label"
+              // onSearch={onSearch}
+              onChange={(val: any) => setColorFilter(val)}
+              options={colorFilterOpt}
+              value={colorFilter}
               allowClear={true}
             />
           </div>

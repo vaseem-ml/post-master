@@ -382,33 +382,33 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
   // filter.sortKey = "exceeded_days"
   // filter.sortType = "ASC"
-  switch (filter.sortKey) {
+  // switch (filter.sortKey) {
 
-    case "book_ofc":
-      sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "book_ofc":
+  //     sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "event_date":
-      sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "event_date":
+  //     sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "status":
-      sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "status":
+  //     sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "exceeded_days":
-      sort = { "exceeded_days": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "exceeded_days":
+  //     sort = { "exceeded_days": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "edd":
-      sort = { "edd": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "edd":
+  //     sort = { "edd": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
 
-    default:
-      break;
+  //   default:
+  //     break;
 
-  }
+  // }
 
 
 
@@ -721,33 +721,33 @@ ipcMain.on('getExportData', async (event, filter) => {
 
   // filter.sortKey = "exceeded_days"
   // filter.sortType = "ASC"
-  switch (filter.sortKey) {
+  // switch (filter.sortKey) {
 
-    case "book_ofc":
-      sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "book_ofc":
+  //     sort = { "book_ofc": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "event_date":
-      sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "event_date":
+  //     sort = { "event_date": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "status":
-      sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "status":
+  //     sort = { "status": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "exceeded_days":
-      sort = { "exceeded_days": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "exceeded_days":
+  //     sort = { "exceeded_days": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
-    case "edd":
-      sort = { "edd": filter.sortType === "ASC" ? 1 : -1 }
-      break;
+  //   case "edd":
+  //     sort = { "edd": filter.sortType === "ASC" ? 1 : -1 }
+  //     break;
 
 
-    default:
-      break;
+  //   default:
+  //     break;
 
-  }
+  // }
 
 
 
@@ -1046,7 +1046,6 @@ ipcMain.on('getExportData', async (event, filter) => {
 
 
 });
-
 
 ipcMain.handle('save-file', async (event, data) => {
   const { canceled, filePath } = await dialog.showSaveDialog({
