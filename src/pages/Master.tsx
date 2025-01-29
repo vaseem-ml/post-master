@@ -28,8 +28,8 @@ function Master() {
 
   async function calledd(newUserJson: any) {
 
-    console.log("final data to submit ");
-    console.log(newUserJson);
+    // console.log("final data to submit ");
+    // console.log(newUserJson);
 
     // const newUserJsons = {
     //   pincode: "305817",
@@ -51,17 +51,17 @@ function Master() {
       // console.log("api call response");
       // console.log(response);
       const { status, data } = JSON.parse(response);
-      console.log("status", status);
-      console.log("data", data);
+      // console.log("status", status);
+      // console.log("data", data);
       message.success("Details inserted.");
       // navigate(0);
 
-      // if (status == true) {
-      //   message.success("Details inserted.");
-      // } else {
-      // message.error("Something went wrong while saving data.");
+      if (status == true) {
+        message.success("Details inserted.");
+      } else {
+      message.error("Something went wrong while saving data.");
       // message.error(JSON.stringify(data));
-      // }
+      }
 
     });
 

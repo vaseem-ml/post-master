@@ -1,3 +1,5 @@
+import { saveAs } from 'file-saver';
+import Papa from 'papaparse';
 
 export const masterTableColumn = [
   "pincode",
@@ -275,5 +277,16 @@ export const deliveryStatusDropOpt = [
   { label: "Item Return", value: "Item Return" }
 ]
 
+export const colorFilter = [
+  'green',
+  'orange',
+  'red',
+  'yellow',
+]
 
-
+export const colorFilterOpt = [
+  { label: "green", value: "green" },
+  { label: "orange", value: "orange" },
+  { label: "red", value: "red" },
+  { label: "yellow", value: "yellow" },
+]

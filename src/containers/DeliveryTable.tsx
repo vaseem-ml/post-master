@@ -4,8 +4,10 @@ import { Pagination, message, Button, Spin, Table, Select, DatePicker, Modal, In
 import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
+import { useNavigate } from 'react-router-dom';
 
-import { deliveryStatusDropOpt, deliveryStatusUi } from '../utils/utils';
+import { deliveryStatusDropOpt, deliveryStatusUi, colorFilterOpt } from '../utils/utils';
+import { useEffectOnce } from '../components/update/useonc'
 import { isEmpty } from 'lodash';
 import type { TableColumnsType, TableProps } from 'antd';
 type TableRowSelection<T extends object = object> = TableProps<T>['rowSelection'];
@@ -17,6 +19,7 @@ const DeliveryTable = () => {
   const [rowData, setRowData] = useState<any>([]);
   const [rowMeta, setRowMeta] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<any>();
+  const [colorFilter, setColorFilter] = useState<any>();
   const [statusToUpdate, setStatusToUpdate] = useState<any>();
   const [dates, setDates] = useState<any>(['', '']);
   const [payload, setPayload] = useState({ page: 1, page_size: 10 });
@@ -29,6 +32,7 @@ const DeliveryTable = () => {
   const [editModal, setEditModal] = useState(false);
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const navigate = useNavigate();
 
   const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
     // console.log('selectedRowKeys changed: ', newSelectedRowKeys);
@@ -38,12 +42,42 @@ const DeliveryTable = () => {
   const { RangePicker } = DatePicker;
   const { confirm } = Modal;
 
+
+  useEffectOnce(() => {
+
+
+    window.getExportData.receiveMessage(async (response: any) => {
+      const { status, data } = JSON.parse(response);
+      if (status == true) {
+        message.success("Delivery data fetched.");
+        try {
+          const csv = Papa.unparse(data?.data);
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          saveAs(blob, `delivery_data_${Date.now()}.csv`);
+          setLoader(false);
+        }
+        catch (error) {
+          message.error("Something went wrong while generating csv.");
+          console.log(TAG + "error", error);
+          setLoader(false);
+        }
+      } else {
+        message.error("Something went wrong while fetching delivery data.");
+        setLoader(false);
+      }
+    });
+
+  });
+
+
+
+
   useEffect(() => {
-    callDataSeeker(undefined, undefined);
+    callDataSeeker();
   }, [payload, sortOrder, sortField]);
 
   const filterOp = () => {
-    callDataSeeker(undefined, undefined);
+    callDataSeeker();
   }
 
   const rowSelection: TableRowSelection = {
@@ -84,6 +118,8 @@ const DeliveryTable = () => {
     // ],
   };
 
+
+
   function esitCal(calledWith: any) {
     if (isEmpty(calledWith) == true || isEmpty(calledWith?.book_date) == true || calledWith?.book_date == "") {
       return "_";
@@ -110,10 +146,10 @@ const DeliveryTable = () => {
 
   }
 
-  async function callDataSeeker(cpage: any, cpagesize: any) {
+  async function callDataSeeker() {
     console.log("callDataSeeker got called");
 
-    let startDate = null, endDate = null, status = null, filter = null, searchStr = null;
+    let startDate = null, endDate = null, status = null, searchStr = null, color = null;
     if (isEmpty(dates) == false && dates?.length > 0 && dates?.[0] !== "" && dates?.[1] !== "") {
       startDate = dayjs(dates[0], "DD-MM-YYYY").format("YYYY-MM-DD");
       endDate = dayjs(dates[1], "DD-MM-YYYY").format("YYYY-MM-DD");
@@ -123,21 +159,22 @@ const DeliveryTable = () => {
       status = statusFilter;
     }
 
-    // if (isEmpty(status) == false) {
-    //   filter = [{ status: status }];
-    // }
+    if (isEmpty(colorFilter) == false) {
+      color = colorFilter;
+    }
 
     if (searchString !== "") {
       searchStr = searchString;
     }
 
     let queryTable = {
-      page: cpage ? cpage : payload?.page,
-      limit: cpagesize ? cpagesize : payload?.page_size,
+      page: payload?.page,
+      limit: payload?.page_size,
       startDate: startDate,
       endDate: endDate,
       status: status,
       search: searchStr,
+      color: color
     }
 
     if (sortField == "" || sortField == undefined) {
@@ -157,21 +194,9 @@ const DeliveryTable = () => {
       console.log("getDeliveryData data", data);
       if (status == true) {
         // message.success("Delivery data fetched.");
-        console.log("cpage cpage cpage", cpage);
-        console.log("cpagesize cpagesize cpagesize", cpagesize);
-        if (cpage == 1 && cpagesize == 10000000) {
-          const exportToCSV = (data: any, filename: any) => {
-            const csv = Papa.unparse(data);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            saveAs(blob, `${filename}.csv`);
-            setLoader(false);
-          };
-          exportToCSV(data?.data, "delivery_data");
-        } else {
-          setRowData(data?.data);
-          setRowMeta(data?.meta);
-          setLoader(false);
-        }
+        setRowData(data?.data);
+        setRowMeta(data?.meta);
+        setLoader(false);
       } else {
         message.error("Something went wrong while fetching delivery data.");
         message.error(JSON.stringify(data));
@@ -183,14 +208,63 @@ const DeliveryTable = () => {
 
   }
 
+  async function callExportSeeker() {
+    console.log("callExportSeeker got called");
+
+    let startDate = null, endDate = null, status = null, searchStr = null, color = null;
+    if (isEmpty(dates) == false && dates?.length > 0 && dates?.[0] !== "" && dates?.[1] !== "") {
+      startDate = dayjs(dates[0], "DD-MM-YYYY").format("YYYY-MM-DD");
+      endDate = dayjs(dates[1], "DD-MM-YYYY").format("YYYY-MM-DD");
+    }
+
+    if (isEmpty(statusFilter) == false) {
+      status = statusFilter;
+    }
+
+    if (isEmpty(colorFilter) == false) {
+      color = colorFilter;
+    }
+
+    if (searchString !== "") {
+      searchStr = searchString;
+    }
+
+    let queryTable = {
+      page: 1,
+      limit: 10000000,
+      startDate: startDate,
+      endDate: endDate,
+      status: status,
+      search: searchStr,
+      color: color
+    }
+
+    if (sortField == "" || sortField == undefined) {
+      status = sortField;
+      Object.assign(queryTable, { sort: null })
+    } else {
+      Object.assign(queryTable, { sort: { [sortField]: sortOrder === "asc" ? 1 : -1 } })
+    }
+
+    console.log(TAG + "queryTable", queryTable);
+
+    try {
+      await window.getExportData.getData(queryTable, "dummyurl");
+    }
+    catch (error) {
+      message.error("Something went wrong while generating csv.");
+      setLoader(false);
+    }
+
+  }
+
+
+
   async function updateOp() {
 
     // console.log(TAG + " update call ", selectedData);
     // console.log(TAG + " statusToUpdate ", statusToUpdate);
-    const updateObj = {
-      article: selectedData?.article,
-      status: statusToUpdate
-    }
+    const updateObj = { article: selectedData?.article, status: statusToUpdate }
     // setLoader(true);
     await window.updateDelivery.updateCall(updateObj, "dummyurl");
 
@@ -200,7 +274,7 @@ const DeliveryTable = () => {
       // console.log("updateDelivery data", data);
       if (status == true) {
         message.success("Updated.");
-        callDataSeeker(undefined, undefined);
+        callDataSeeker();
       } else {
         message.error("Something went wrong while updating.");
       }
@@ -223,7 +297,7 @@ const DeliveryTable = () => {
       // console.log("getDeliveryData data", data);
       if (status == true) {
         message.success("Deleted.");
-        callDataSeeker(undefined, undefined);
+        callDataSeeker();
         setSelectedRowKeys([]);
       } else {
         message.error("Something went wrong while deleting.");
@@ -235,7 +309,7 @@ const DeliveryTable = () => {
 
   async function exportOp() {
     setLoader(true);
-    callDataSeeker(1, 10000000);
+    callExportSeeker();
   }
 
   const showConfirm = () => {
@@ -267,6 +341,7 @@ const DeliveryTable = () => {
           <span>{article || "-"}</span>
         );
       },
+      sorter: true
     },
     {
       title: "Book Ofc Name",
@@ -277,6 +352,7 @@ const DeliveryTable = () => {
           <span>{book_ofc_name || "-"}</span>
         );
       },
+      sorter: true
     },
     {
       title: "Dest Ofc Name",
@@ -320,8 +396,7 @@ const DeliveryTable = () => {
         return (
           <span>{office_name || "-"}</span>
         );
-      },
-      // sorter: true
+      }
     },
     {
       title: "Event Date",
@@ -332,6 +407,7 @@ const DeliveryTable = () => {
           <span>{event_date || "-"}</span>
         );
       },
+      sorter: true
     },
     {
       title: "BAGID",
@@ -352,6 +428,7 @@ const DeliveryTable = () => {
           <span>{edd || "-"}</span>
         );
       },
+      sorter: true
     },
     {
       title: "Exceeded days",
@@ -363,6 +440,7 @@ const DeliveryTable = () => {
           <span>{exceeded_days}</span>
         );
       },
+      sorter: true
     },
     // {
     //   title: "Created At",
@@ -469,6 +547,20 @@ const DeliveryTable = () => {
               onChange={onChange}
               options={deliveryStatusDropOpt}
               value={statusFilter}
+              allowClear={true}
+            />
+          </div>
+
+          <div className='me-3'>
+            <Select
+              className='w-[200px]'
+              showSearch
+              placeholder="Select color"
+              optionFilterProp="label"
+              // onSearch={onSearch}
+              onChange={(val: any) => setColorFilter(val)}
+              options={colorFilterOpt}
+              value={colorFilter}
               allowClear={true}
             />
           </div>
