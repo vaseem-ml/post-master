@@ -470,7 +470,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     {
       $lookup: {
         from: 'masters', // The name of your master collection
-        localField: 'book_ofc',
+        localField: 'dest_ofc_id',
         foreignField: 'facility_id',
         as: 'masterData',
       },
