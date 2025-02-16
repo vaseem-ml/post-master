@@ -2,7 +2,11 @@ import React, { useEffect } from 'react';
 import { HashRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faUpload, faTable, faAddressBook, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import Papa from 'papaparse';
+import { message } from 'antd';
+import { saveAs } from 'file-saver';
 
+import { useEffectOnce } from './components/update/useonc';
 import UpdateElectron from '@/components/update';
 
 import HomePage from './pages/Home';
@@ -25,6 +29,30 @@ const App = () => {
       window.history.pushState({}, '', '/');
     }
   }, []);
+
+  useEffectOnce(() => {
+
+    window.getExportData.receiveMessage(async (response: any) => {
+      const { status, data } = JSON.parse(response);
+      if (status == true) {
+        message.success("Delivery data fetched.");
+        try {
+          const csv = Papa.unparse(data?.data);
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          saveAs(blob, `delivery_data_${Date.now()}.csv`);
+        }
+        catch (error) {
+          message.error("Something went wrong while generating csv.");
+          console.log("TAG" + "error", error);
+        }
+      } else {
+        message.error("Something went wrong while fetching delivery data.");
+      }
+    });
+
+  });
+
+
 
   return (
     <Router>

@@ -27,8 +27,8 @@ import moment from "moment"
 //
 process.env.APP_ROOT = path.join(__dirname, '../..')
 
-console.log("process process")
-console.log(process.env.APP_ROOT)
+// console.log("process process")
+// console.log(process.env.APP_ROOT)
 
 
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
@@ -55,11 +55,11 @@ if (!app.requestSingleInstanceLock()) {
 let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
 const indexHtml = path.join(RENDERER_DIST, 'index.html')
-console.log("preload ", preload)
-console.log("indexHtml ", indexHtml)
-console.log("RENDERER_DIST ", RENDERER_DIST)
-console.log("VITE_DEV_SERVER_URL ", VITE_DEV_SERVER_URL)
-console.log("process.env.VITE_PUBLIC ", process.env.VITE_PUBLIC)
+// console.log("preload ", preload)
+// console.log("indexHtml ", indexHtml)
+// console.log("RENDERER_DIST ", RENDERER_DIST)
+// console.log("VITE_DEV_SERVER_URL ", VITE_DEV_SERVER_URL)
+// console.log("process.env.VITE_PUBLIC ", process.env.VITE_PUBLIC)
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -112,7 +112,7 @@ app.whenReady().then(createWindow).then(() => {
     // useUnifiedTopology: true,
   }).then(async (err) => {
 
-    console.log("download done");
+    // console.log("download done");
 
     // const admin = await client.find({});
     // console.log("admin", admin);
@@ -369,10 +369,35 @@ ipcMain.on('updateDelivery', async (event, filter) => {
 
 });
 
+
+ipcMain.on('getStatisticsData', async (event, filter) => {
+
+  // try {
+  //   const result = await delivery.updateOne({ article: filter?.article }, { status: filter?.status });
+  //   event.reply('get-statistic-success', JSON.stringify({ status: true, data: result }));
+  // } catch (error: any) {
+  //   console.log('error+++++++++======', error);
+  //   event.reply('get-statistic-error', JSON.stringify({ status: false, data: error }));
+  // }
+
+  const data = {
+    orange: 4,
+    green: 4,
+    red: 4,
+    yellow: 4,
+    purple: 4,
+    itemDelivered: 4,
+    itemBooked: 4
+  }
+  event.reply('get-statistic-success', JSON.stringify({ status: true, data: data }));
+
+
+});
+
 ipcMain.on('getDeliveryData', async (event, filter) => {
 
   console.log("get delivery data called");
-  console.log(filter);
+  // console.log(filter);
 
   // let cond = { company: Mongoose.Types.ObjectId(filter.company) }
   // let cond = {};
@@ -458,7 +483,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     });
   }
 
-  console.log("this is condition++++++++++==========", cond)
+  // console.log("this is condition++++++++++==========", cond)
 
 
 
@@ -710,8 +735,8 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
 ipcMain.on('getExportData', async (event, filter) => {
 
-  console.log("get delivery data called");
-  console.log(filter);
+  // console.log("get delivery data called");
+  // console.log(filter);
 
   // let cond = { company: Mongoose.Types.ObjectId(filter.company) }
   // let cond = {};

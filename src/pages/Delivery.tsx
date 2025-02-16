@@ -38,9 +38,9 @@ function Delivery() {
       // console.log(TAG + "api call response");
       // console.log(response);
       const { status, data } = JSON.parse(response);
-      console.log(TAG + "status", status);
-      console.log(TAG + "data", data);
-      navigate(0);
+      // console.log(TAG + "status", status);
+      // console.log(TAG + "data", data);
+      navigate('/delivery-table');
 
       if (status == true) {
         message.success("Details inserted.");
@@ -168,7 +168,7 @@ function Delivery() {
         }, {})
       );
 
-      console.log(TAG + " jsonData jsonData ", jsonData);
+      // console.log(TAG + " jsonData jsonData ", jsonData);
 
       if (isEmpty(jsonData) == true || isEmpty(jsonData?.[0]) == true || isEmpty(keys) == true) {
         message.error("file is empty.");
@@ -248,8 +248,8 @@ function Delivery() {
         item.is_active = true;
       });
 
-      console.log(TAG + "final data to submit ");
-      console.log(onlyDbKeys);
+      // console.log(TAG + "final data to submit ");
+      // console.log(onlyDbKeys);
 
       calledd(onlyDbKeys);
 

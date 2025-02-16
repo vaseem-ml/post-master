@@ -16,6 +16,7 @@ const TAG = "DeliveryTable: ";
 const DeliveryTable = () => {
 
   const [loader, setLoader] = useState<boolean>(true);
+  const [stats, setStats] = useState<any>(null);
   const [rowData, setRowData] = useState<any>([]);
   const [rowMeta, setRowMeta] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<any>();
@@ -44,33 +45,13 @@ const DeliveryTable = () => {
 
 
   useEffectOnce(() => {
-
-
-    window.getExportData.receiveMessage(async (response: any) => {
-      const { status, data } = JSON.parse(response);
-      if (status == true) {
-        message.success("Delivery data fetched.");
-        try {
-          const csv = Papa.unparse(data?.data);
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-          saveAs(blob, `delivery_data_${Date.now()}.csv`);
-          setLoader(false);
-        }
-        catch (error) {
-          message.error("Something went wrong while generating csv.");
-          console.log(TAG + "error", error);
-          setLoader(false);
-        }
-      } else {
-        message.error("Something went wrong while fetching delivery data.");
-        setLoader(false);
-      }
-    });
-
+    // callStatisticData();
   });
 
 
-
+  useEffect(() => {
+    callStatisticData();
+  }, [0]);
 
   useEffect(() => {
     callDataSeeker();
@@ -83,42 +64,28 @@ const DeliveryTable = () => {
   const rowSelection: TableRowSelection = {
     selectedRowKeys,
     onChange: onSelectChange,
-    // selections: [
-    //   Table.SELECTION_ALL,
-    //   Table.SELECTION_INVERT,
-    //   Table.SELECTION_NONE,
-    //   {
-    //     key: 'odd',
-    //     text: 'Select Odd Row',
-    //     onSelect: (changeableRowKeys) => {
-    //       let newSelectedRowKeys = [];
-    //       newSelectedRowKeys = changeableRowKeys.filter((_, index) => {
-    //         if (index % 2 !== 0) {
-    //           return false;
-    //         }
-    //         return true;
-    //       });
-    //       setSelectedRowKeys(newSelectedRowKeys);
-    //     },
-    //   },
-    //   {
-    //     key: 'even',
-    //     text: 'Select Even Row',
-    //     onSelect: (changeableRowKeys) => {
-    //       let newSelectedRowKeys = [];
-    //       newSelectedRowKeys = changeableRowKeys.filter((_, index) => {
-    //         if (index % 2 !== 0) {
-    //           return true;
-    //         }
-    //         return false;
-    //       });
-    //       setSelectedRowKeys(newSelectedRowKeys);
-    //     },
-    //   },
-    // ],
   };
 
+  async function callStatisticData(){
+    
+    await window.getStatisticsData.getData("", "dummyurl");
 
+    window.getStatisticsData.receiveMessage((response: any) => {
+      const { status, data } = JSON.parse(response);
+      // console.log("getDeliveryData status", status);
+      // console.log("getDeliveryData data", data);
+      if (status == true) {
+        // message.success("Stats data fetched.");
+        setStats(data || null);
+        // setLoader(false);
+      } else {
+        message.error("Something went wrong while fetching statistic data.");
+        message.error(JSON.stringify(data));
+        setLoader(false);
+      }
+
+    });
+  }
 
   function esitCal(calledWith: any) {
     if (isEmpty(calledWith) == true || isEmpty(calledWith?.book_date) == true || calledWith?.book_date == "") {
@@ -190,8 +157,8 @@ const DeliveryTable = () => {
 
     window.getDeliveryData.receiveMessage((response: any) => {
       const { status, data } = JSON.parse(response);
-      console.log("getDeliveryData status", status);
-      console.log("getDeliveryData data", data);
+      // console.log("getDeliveryData status", status);
+      // console.log("getDeliveryData data", data);
       if (status == true) {
         // message.success("Delivery data fetched.");
         setRowData(data?.data);
@@ -209,7 +176,7 @@ const DeliveryTable = () => {
   }
 
   async function callExportSeeker() {
-    console.log("callExportSeeker got called");
+    // console.log("callExportSeeker got called");
 
     let startDate = null, endDate = null, status = null, searchStr = null, color = null;
     if (isEmpty(dates) == false && dates?.length > 0 && dates?.[0] !== "" && dates?.[1] !== "") {
@@ -246,10 +213,11 @@ const DeliveryTable = () => {
       Object.assign(queryTable, { sort: { [sortField]: sortOrder === "asc" ? 1 : -1 } })
     }
 
-    console.log(TAG + "queryTable", queryTable);
+    // console.log(TAG + "queryTable", queryTable);
 
     try {
       await window.getExportData.getData(queryTable, "dummyurl");
+      setLoader(false);
     }
     catch (error) {
       message.error("Something went wrong while generating csv.");
@@ -509,8 +477,9 @@ const DeliveryTable = () => {
   };
 
 
+  console.log(TAG + " stats  ", stats);
   // console.log(TAG + " rowMeta ", rowMeta);
-  console.log(TAG + " rowData ", rowData);
+  // console.log(TAG + " rowData ", rowData);
   // console.log(TAG + " statusFilter ", statusFilter);
   // console.log(TAG + " dates ", dates);
   // console.log(TAG + " sortOrder ", sortOrder);
@@ -523,6 +492,59 @@ const DeliveryTable = () => {
   return (
     <div className='mt-3'>
       <Spin spinning={loader}>
+
+        <div className='flex gap-x-8 mb-3 justify-between'>
+
+          <div className='w-[180px] h-[80px] flex flex-shrink-0 border bg-white rounded items-center justify-center'>
+            <div>
+              <p className='m-0 text-center w-full text-[18px] leading-[14px] font-bold ' > Purple </p>
+              <p className='m-0 text-center w-full text-[14px] leading-[14px] font-semibold mt-2' > {stats?.purple || "NA"} </p>
+            </div>
+          </div>
+
+          <div className='w-[180px] h-[80px] flex flex-shrink-0 border bg-white rounded items-center justify-center'>
+            <div>
+              <p className='m-0 text-center w-full text-[18px] leading-[14px] font-bold ' > Green </p>
+              <p className='m-0 text-center w-full text-[14px] leading-[14px] font-semibold mt-2' > {stats?.green || "NA"} </p>
+            </div>
+          </div>
+
+          <div className='w-[180px] h-[80px] flex flex-shrink-0 border bg-white rounded items-center justify-center'>
+            <div>
+              <p className='m-0 text-center w-full text-[18px] leading-[14px] font-bold ' > Orange </p>
+              <p className='m-0 text-center w-full text-[14px] leading-[14px] font-semibold mt-2' > {stats?.orange || "NA"} </p>
+            </div>
+          </div>
+
+          <div className='w-[180px] h-[80px] flex flex-shrink-0 border bg-white rounded items-center justify-center'>
+            <div>
+              <p className='m-0 text-center w-full text-[18px] leading-[14px] font-bold ' > Red </p>
+              <p className='m-0 text-center w-full text-[14px] leading-[14px] font-semibold mt-2' > {stats?.red || "NA"} </p>
+            </div>
+          </div>
+
+          <div className='w-[180px] h-[80px] flex flex-shrink-0 border bg-white rounded items-center justify-center'>
+            <div>
+              <p className='m-0 text-center w-full text-[18px] leading-[14px] font-bold ' > Yellow </p>
+              <p className='m-0 text-center w-full text-[14px] leading-[14px] font-semibold mt-2' > {stats?.yellow || "NA"} </p>
+            </div>
+          </div>
+
+          <div className='w-[180px] h-[80px] flex flex-shrink-0 border bg-white rounded items-center justify-center'>
+            <div>
+              <p className='m-0 text-center w-full text-[18px] leading-[14px] font-bold ' > Item Delivered </p>
+              <p className='m-0 text-center w-full text-[14px] leading-[14px] font-semibold mt-2' > {stats?.itemDelivered || "NA"} </p>
+            </div>
+          </div>
+
+          <div className='w-[180px] h-[80px] flex flex-shrink-0 border bg-white rounded items-center justify-center'>
+            <div>
+              <p className='m-0 text-center w-full text-[18px] leading-[14px] font-bold ' > Item Booked </p>
+              <p className='m-0 text-center w-full text-[14px] leading-[14px] font-semibold mt-2' > {stats?.itemBooked || "NA"} </p>
+            </div>
+          </div>
+
+        </div>
 
         <div className='flex pb-5'>
 
@@ -548,6 +570,7 @@ const DeliveryTable = () => {
               options={deliveryStatusDropOpt}
               value={statusFilter}
               allowClear={true}
+              mode="multiple"
             />
           </div>
 
@@ -562,6 +585,7 @@ const DeliveryTable = () => {
               options={colorFilterOpt}
               value={colorFilter}
               allowClear={true}
+              mode="multiple"
             />
           </div>
 

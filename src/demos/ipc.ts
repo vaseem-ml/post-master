@@ -19,6 +19,6 @@ window.ipcRenderer.on('main-process-message', (_event, ...args) => {
 //     console.log("+++++++++++++++++++++");
 //     // const admin = await adminModel.find({});
 //     console.log("+++++++++++++++++++++");
-//     // console.log(admin);
+//     console.log(admin);
 // });
 

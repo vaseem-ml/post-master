@@ -1,124 +1,107 @@
-import { app, ipcMain, BrowserWindow, dialog, shell } from "electron";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import { Schema, model, connect } from "mongoose";
-import os from "node:os";
-import fs from "fs";
-const { autoUpdater } = createRequire(import.meta.url)("electron-updater");
-function update(win2) {
-  autoUpdater.autoDownload = false;
-  autoUpdater.disableWebInstaller = false;
-  autoUpdater.allowDowngrade = false;
-  autoUpdater.on("checking-for-update", function() {
-  });
-  autoUpdater.on("update-available", (arg) => {
-    win2.webContents.send("update-can-available", { update: true, version: app.getVersion(), newVersion: arg == null ? void 0 : arg.version });
-  });
-  autoUpdater.on("update-not-available", (arg) => {
-    win2.webContents.send("update-can-available", { update: false, version: app.getVersion(), newVersion: arg == null ? void 0 : arg.version });
-  });
-  ipcMain.handle("check-update", async () => {
-    if (!app.isPackaged) {
-      const error = new Error("The update feature is only available after the package.");
-      return { message: error.message, error };
+import { app as n, ipcMain as o, BrowserWindow as m, dialog as I, shell as A } from "electron";
+import { createRequire as y } from "node:module";
+import { fileURLToPath as j } from "node:url";
+import p from "node:path";
+import { Schema as f, model as v, connect as q } from "mongoose";
+import F from "node:os";
+import N from "fs";
+const { autoUpdater: d } = y(import.meta.url)("electron-updater");
+function x(a) {
+  d.autoDownload = !1, d.disableWebInstaller = !1, d.allowDowngrade = !1, d.on("checking-for-update", function() {
+  }), d.on("update-available", (e) => {
+    a.webContents.send("update-can-available", { update: !0, version: n.getVersion(), newVersion: e == null ? void 0 : e.version });
+  }), d.on("update-not-available", (e) => {
+    a.webContents.send("update-can-available", { update: !1, version: n.getVersion(), newVersion: e == null ? void 0 : e.version });
+  }), o.handle("check-update", async () => {
+    if (!n.isPackaged) {
+      const e = new Error("The update feature is only available after the package.");
+      return { message: e.message, error: e };
     }
     try {
-      return await autoUpdater.checkForUpdatesAndNotify();
-    } catch (error) {
-      return { message: "Network error", error };
+      return await d.checkForUpdatesAndNotify();
+    } catch (e) {
+      return { message: "Network error", error: e };
     }
-  });
-  ipcMain.handle("start-download", (event) => {
-    startDownload(
-      (error, progressInfo) => {
-        if (error) {
-          event.sender.send("update-error", { message: error.message, error });
-        } else {
-          event.sender.send("download-progress", progressInfo);
-        }
+  }), o.handle("start-download", (e) => {
+    E(
+      (t, r) => {
+        t ? e.sender.send("update-error", { message: t.message, error: t }) : e.sender.send("download-progress", r);
       },
       () => {
-        event.sender.send("update-downloaded");
+        e.sender.send("update-downloaded");
       }
     );
-  });
-  ipcMain.handle("quit-and-install", () => {
-    autoUpdater.quitAndInstall(false, true);
+  }), o.handle("quit-and-install", () => {
+    d.quitAndInstall(!1, !0);
   });
 }
-function startDownload(callback, complete) {
-  autoUpdater.on("download-progress", (info) => callback(null, info));
-  autoUpdater.on("error", (error) => callback(error, null));
-  autoUpdater.on("update-downloaded", complete);
-  autoUpdater.downloadUpdate();
+function E(a, e) {
+  d.on("download-progress", (t) => a(null, t)), d.on("error", (t) => a(t, null)), d.on("update-downloaded", e), d.downloadUpdate();
 }
-const masterSchema = new Schema(
+const R = new f(
   {
     facility_id: {
       type: String,
-      unique: true,
-      required: true
+      unique: !0,
+      required: !0
     },
     pincode: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     booking_office: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     office_name: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     division: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     region: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     d1: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     d2: {
       type: String,
-      allownull: true,
-      required: false
+      allownull: !0,
+      required: !1
     },
     is_deleted: {
       type: Boolean,
-      default: false,
-      allownull: false,
-      required: true
+      default: !1,
+      allownull: !1,
+      required: !0
     },
     is_active: {
       type: Boolean,
-      default: true,
-      allownull: false,
-      required: true
+      default: !0,
+      allownull: !1,
+      required: !0
     }
   },
   {
-    timestamps: true
+    timestamps: !0
   }
-);
-const master = model("master", masterSchema);
-const deliverySchema = new Schema(
+), w = v("master", R), S = new f(
   {
     article: {
       type: String,
-      required: true,
-      unique: true
+      required: !0,
+      unique: !0
     },
     booking: {
       type: String
@@ -242,164 +225,116 @@ const deliverySchema = new Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: !0
   }
 );
-deliverySchema.index({ article: 1 }, { unique: true });
-const delivery = model("delivery", deliverySchema);
-createRequire(import.meta.url);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-process.env.APP_ROOT = path.join(__dirname, "../..");
-console.log("process process");
-console.log(process.env.APP_ROOT);
-const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-if (os.release().startsWith("6.1")) app.disableHardwareAcceleration();
-if (process.platform === "win32") app.setAppUserModelId(app.getName());
-if (!app.requestSingleInstanceLock()) {
-  app.quit();
-  process.exit(0);
-}
-let win = null;
-const preload = path.join(__dirname, "../preload/index.mjs");
-const indexHtml = path.join(RENDERER_DIST, "index.html");
-console.log("preload ", preload);
-console.log("indexHtml ", indexHtml);
-console.log("RENDERER_DIST ", RENDERER_DIST);
-console.log("VITE_DEV_SERVER_URL ", VITE_DEV_SERVER_URL);
-console.log("process.env.VITE_PUBLIC ", process.env.VITE_PUBLIC);
-async function createWindow() {
-  win = new BrowserWindow({
+S.index({ article: 1 }, { unique: !0 });
+const _ = v("delivery", S);
+y(import.meta.url);
+const h = p.dirname(j(import.meta.url));
+process.env.APP_ROOT = p.join(h, "../..");
+const C = p.join(process.env.APP_ROOT, "dist-electron"), D = p.join(process.env.APP_ROOT, "dist"), $ = process.env.VITE_DEV_SERVER_URL;
+process.env.VITE_PUBLIC = $ ? p.join(process.env.APP_ROOT, "public") : D;
+F.release().startsWith("6.1") && n.disableHardwareAcceleration();
+process.platform === "win32" && n.setAppUserModelId(n.getName());
+n.requestSingleInstanceLock() || (n.quit(), process.exit(0));
+let i = null;
+const b = p.join(h, "../preload/index.mjs"), k = p.join(D, "index.html");
+async function O() {
+  i = new m({
     title: "Main window",
-    icon: path.join(process.env.VITE_PUBLIC, "favicon.ico"),
+    icon: p.join(process.env.VITE_PUBLIC, "favicon.ico"),
     webPreferences: {
-      preload
+      preload: b
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
       // nodeIntegration: true,
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       // contextIsolation: false,
     }
-  });
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-    win.webContents.openDevTools();
-  } else {
-    win.loadFile(indexHtml);
-  }
-  win.webContents.on("did-finish-load", () => {
-    win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-  });
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("https:")) shell.openExternal(url);
-    return { action: "deny" };
-  });
-  update(win);
+  }), $ ? (i.loadURL($), i.webContents.openDevTools()) : i.loadFile(k), i.webContents.on("did-finish-load", () => {
+    i == null || i.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  }), i.webContents.setWindowOpenHandler(({ url: a }) => (a.startsWith("https:") && A.openExternal(a), { action: "deny" })), x(i);
 }
-app.whenReady().then(createWindow).then(() => {
-  connect(`mongodb://localhost:27017`, {
+n.whenReady().then(O).then(() => {
+  q("mongodb://localhost:27017", {
     // useNewUrlParser: true,
     // useUnifiedTopology: true,
-  }).then(async (err) => {
-    console.log("download done");
-  }).catch((err) => {
-    console.log("Error in db connection", err);
+  }).then(async (a) => {
+  }).catch((a) => {
+    console.log("Error in db connection", a);
   });
 });
-app.on("window-all-closed", () => {
-  win = null;
-  if (process.platform !== "darwin") app.quit();
+n.on("window-all-closed", () => {
+  i = null, process.platform !== "darwin" && n.quit();
 });
-app.on("second-instance", () => {
-  if (win) {
-    if (win.isMinimized()) win.restore();
-    win.focus();
-  }
+n.on("second-instance", () => {
+  i && (i.isMinimized() && i.restore(), i.focus());
 });
-app.on("activate", () => {
-  const allWindows = BrowserWindow.getAllWindows();
-  if (allWindows.length) {
-    allWindows[0].focus();
-  } else {
-    createWindow();
-  }
+n.on("activate", () => {
+  const a = m.getAllWindows();
+  a.length ? a[0].focus() : O();
 });
-ipcMain.handle("open-win", (_, arg) => {
-  const childWindow = new BrowserWindow({
+o.handle("open-win", (a, e) => {
+  const t = new m({
     webPreferences: {
-      preload,
-      nodeIntegration: true,
-      contextIsolation: false
+      preload: b,
+      nodeIntegration: !0,
+      contextIsolation: !1
     }
   });
-  if (VITE_DEV_SERVER_URL) {
-    childWindow.loadURL(`${VITE_DEV_SERVER_URL}#${arg}`);
-  } else {
-    childWindow.loadFile(indexHtml, { hash: arg });
-  }
+  $ ? t.loadURL(`${$}#${e}`) : t.loadFile(k, { hash: e });
 });
-ipcMain.on("login", async (event, payload) => {
+o.on("login", async (a, e) => {
   try {
-    const bulkOps = payload.map((item) => ({
+    const t = e.map((s) => ({
       updateOne: {
-        filter: { facility_id: item.facility_id },
-        update: { $set: item },
-        upsert: true
+        filter: { facility_id: s.facility_id },
+        update: { $set: s },
+        upsert: !0
       }
-    }));
-    const docs = await master.bulkWrite(bulkOps);
-    event.reply("login-success", JSON.stringify({ status: true, data: docs }));
-  } catch (err) {
-    event.reply("login-error", JSON.stringify({ status: false, data: err }));
+    })), r = await w.bulkWrite(t);
+    a.reply("login-success", JSON.stringify({ status: !0, data: r }));
+  } catch (t) {
+    a.reply("login-error", JSON.stringify({ status: !1, data: t }));
   }
 });
-ipcMain.on("deliveryAdd", async (event, payload) => {
+o.on("deliveryAdd", async (a, e) => {
   try {
-    const bulkOps = payload.map((item) => ({
+    const t = e.map((s) => ({
       updateOne: {
-        filter: { article: item.article },
+        filter: { article: s.article },
         // Check if the article already exists
-        update: { $set: item },
+        update: { $set: s },
         // If found, update the document with new values
-        upsert: true
+        upsert: !0
         // If not found, insert the new document
       }
-    }));
-    const docs = await delivery.bulkWrite(bulkOps, { ordered: false });
-    event.reply("delivery-add-success", JSON.stringify({ status: true, data: docs }));
-  } catch (err) {
-    event.reply("delivery-add-error", JSON.stringify({ status: false, data: err }));
+    })), r = await _.bulkWrite(t, { ordered: !1 });
+    a.reply("delivery-add-success", JSON.stringify({ status: !0, data: r }));
+  } catch (t) {
+    a.reply("delivery-add-error", JSON.stringify({ status: !1, data: t }));
   }
 });
-ipcMain.on("getMasterData", async (event, filter) => {
-  let cond = {};
-  let search = null;
-  if (filter.search !== null) {
-    search = filter.search;
-  }
-  if (search) {
-    Object.assign(cond, {
-      $or: [
-        {
-          facility_id: {
-            $regex: ".*" + search + ".*",
-            $options: "si"
-          }
+o.on("getMasterData", async (a, e) => {
+  let t = {}, r = null;
+  e.search !== null && (r = e.search), r && Object.assign(t, {
+    $or: [
+      {
+        facility_id: {
+          $regex: ".*" + r + ".*",
+          $options: "si"
         }
-      ]
-    });
-  }
-  let sort = filter.sort ? filter.sort : { createdAt: -1 };
-  let limit = parseInt(filter.limit) || 10;
-  let skip = (parseInt(filter.page) - 1) * limit || 0;
-  const allItems = await master.aggregate([
+      }
+    ]
+  });
+  let s = e.sort ? e.sort : { createdAt: -1 }, l = parseInt(e.limit) || 10, u = (parseInt(e.page) - 1) * l || 0;
+  const c = await w.aggregate([
     // {
     //   $match: cond
     // },
     {
-      $sort: sort
+      $sort: s
     },
     {
       $project: {
@@ -432,98 +367,295 @@ ipcMain.on("getMasterData", async (event, filter) => {
     {
       $project: {
         data: {
-          $slice: ["$data", skip, {
-            $ifNull: [limit, "$total.createdAt"]
+          $slice: ["$data", u, {
+            $ifNull: [l, "$total.createdAt"]
           }]
         },
         meta: {
           total: "$total.createdAt",
           limit: {
-            $literal: limit
+            $literal: l
           },
           page: {
-            $literal: skip / limit + 1
+            $literal: u / l + 1
           },
           pages: {
             $ceil: {
-              $divide: ["$total.createdAt", limit]
+              $divide: ["$total.createdAt", l]
             }
           }
         }
       }
     }
   ]);
-  let holdVal = [];
-  if (allItems && allItems.length) {
-    holdVal = allItems[0];
-  } else {
-    holdVal = [];
-  }
-  event.reply("get-master-success", JSON.stringify({ status: true, data: holdVal }));
+  let g = [];
+  c && c.length ? g = c[0] : g = [], a.reply("get-master-success", JSON.stringify({ status: !0, data: g }));
 });
-ipcMain.on("deleteDelivery", async (event, filter) => {
+o.on("deleteDelivery", async (a, e) => {
   try {
-    const result = await delivery.deleteMany({ _id: filter.ids });
-    event.reply("delete-delivery-success", JSON.stringify({ status: true, data: result }));
-  } catch (error) {
-    console.log("error+++++++++======", error);
-    event.reply("delete-delivery-error", JSON.stringify({ status: false, data: error }));
+    const t = await _.deleteMany({ _id: e.ids });
+    a.reply("delete-delivery-success", JSON.stringify({ status: !0, data: t }));
+  } catch (t) {
+    console.log("error+++++++++======", t), a.reply("delete-delivery-error", JSON.stringify({ status: !1, data: t }));
   }
 });
-ipcMain.on("updateDelivery", async (event, filter) => {
+o.on("updateDelivery", async (a, e) => {
   try {
-    const result = await delivery.updateOne({ article: filter == null ? void 0 : filter.article }, { status: filter == null ? void 0 : filter.status });
-    event.reply("update-delivery-success", JSON.stringify({ status: true, data: result }));
-  } catch (error) {
-    console.log("error+++++++++======", error);
-    event.reply("update-delivery-error", JSON.stringify({ status: false, data: error }));
+    const t = await _.updateOne({ article: e == null ? void 0 : e.article }, { status: e == null ? void 0 : e.status });
+    a.reply("update-delivery-success", JSON.stringify({ status: !0, data: t }));
+  } catch (t) {
+    console.log("error+++++++++======", t), a.reply("update-delivery-error", JSON.stringify({ status: !1, data: t }));
   }
 });
-ipcMain.on("getDeliveryData", async (event, filter) => {
+o.on("getStatisticsData", async (a, e) => {
+  const t = {
+    orange: 4,
+    green: 4,
+    red: 4,
+    yellow: 4,
+    purple: 4,
+    itemDelivered: 4,
+    itemBooked: 4
+  };
+  a.reply("get-statistic-success", JSON.stringify({ status: !0, data: t }));
+});
+o.on("getDeliveryData", async (a, e) => {
   console.log("get delivery data called");
-  console.log(filter);
-  let sort = filter.sort ? filter.sort : { createdAt: -1 };
-  let cond = {};
-  if (filter.startDate && filter.endDate) {
-    Object.assign(cond, {
-      $and: [
-        {
-          "event_date": { $gte: new Date(filter.startDate) }
-        },
-        {
-          "event_date": { $lte: new Date(filter.endDate) }
+  let t = e.sort ? e.sort : { createdAt: -1 }, r = {};
+  e.startDate && e.endDate && Object.assign(r, {
+    $and: [
+      {
+        event_date: { $gte: new Date(e.startDate) }
+      },
+      {
+        event_date: { $lte: new Date(e.endDate) }
+      }
+    ]
+  }), e.status !== null && Object.assign(r, { status: e.status }), e.color && Object.assign(r, { color: e.color }), e.search && Object.assign(r, {
+    $or: [
+      {
+        article: {
+          $regex: ".*" + e.search + ".*",
+          $options: "si"
         }
-      ]
-    });
-  }
-  if (filter.status !== null) {
-    Object.assign(cond, { status: filter["status"] });
-  }
-  if (filter.color) {
-    Object.assign(cond, { color: filter["color"] });
-  }
-  if (filter.search) {
-    Object.assign(cond, {
-      $or: [
-        {
-          article: {
-            $regex: ".*" + filter.search + ".*",
-            $options: "si"
-          }
-        },
-        {
-          book_ofc_name: {
-            $regex: ".*" + filter.search + ".*",
-            $options: "si"
+      },
+      {
+        book_ofc_name: {
+          $regex: ".*" + e.search + ".*",
+          $options: "si"
+        }
+      }
+    ]
+  });
+  let s = parseInt(e.limit) || 10, l = (parseInt(e.page) - 1) * s || 0;
+  const u = await _.aggregate([
+    // { $sort: sort },
+    {
+      $lookup: {
+        from: "masters",
+        // The name of your master collection
+        localField: "dest_ofc_id",
+        foreignField: "facility_id",
+        as: "masterData"
+      }
+    },
+    {
+      $addFields: {
+        masterData: { $arrayElemAt: ["$masterData", 0] }
+        // Extract the first matching document
+      }
+    },
+    {
+      $addFields: {
+        d: { $ifNull: ["$masterData.d2", 3] }
+      }
+    },
+    {
+      $addFields: {
+        edd: {
+          $toDate: {
+            $add: [
+              { $toDate: "$book_date" },
+              { $multiply: [{ $subtract: [{ $toInt: "$d" }, 1] }, 24 * 60 * 60 * 1e3] }
+              // Convert `$d` to a number
+            ]
           }
         }
-      ]
-    });
-  }
-  console.log("this is condition++++++++++==========", cond);
-  let limit = parseInt(filter.limit) || 10;
-  let skip = (parseInt(filter.page) - 1) * limit || 0;
-  const allItems = await delivery.aggregate([
+      }
+    },
+    {
+      $addFields: {
+        remainDays: {
+          $divide: [
+            {
+              $subtract: [
+                { $toLong: "$edd" },
+                { $toLong: { $toDate: "$event_date" } }
+              ]
+            },
+            1e3 * 60 * 60 * 24
+          ]
+        }
+      }
+    },
+    {
+      $addFields: {
+        exceeded_days: {
+          $cond: [{ $lt: ["$remainDays", 0] }, { $abs: "$remainDays" }, 0]
+        }
+      }
+    },
+    {
+      $addFields: {
+        color: {
+          $switch: {
+            branches: [
+              {
+                case: {
+                  $and: [{ $gte: ["$remainDays", 0] }, { $eq: ["$status", "Item Delivered"] }]
+                },
+                then: "green"
+              },
+              {
+                case: {
+                  $and: [{ $lt: ["$remainDays", 0] }, { $gt: ["$remainDays", -2] }, { $ne: ["$status", "Item Delivered"] }]
+                },
+                then: "orange"
+              },
+              {
+                case: {
+                  $and: [{ $lt: ["$remainDays", -1] }, { $ne: ["$status", "Item Delivered"] }]
+                },
+                then: "red"
+              },
+              {
+                case: {
+                  $and: [{ $lte: ["$remainDays", 0] }, { $ne: ["$dest_ofc_id", "$office_id"] }, { $ne: ["$status", "Item Delivered"] }]
+                },
+                then: "yellow"
+              }
+            ],
+            default: ""
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        article: 1,
+        booking: 1,
+        track: 1,
+        cod: 1,
+        book_ofc: 1,
+        book_ofc_name: 1,
+        dest_ofc_id: 1,
+        dest_ofc_name: 1,
+        book_id: 1,
+        article_type: 1,
+        weight: 1,
+        book_date: 1,
+        book_time: 1,
+        tariff: 1,
+        prepaid_value: 1,
+        sender_name: 1,
+        sender_city: 1,
+        sender_mobile: 1,
+        receiver_name: 1,
+        recevier_addr1: 1,
+        recevier_addr2: 1,
+        recevier_addr3: 1,
+        receiver_city: 1,
+        receiver_phone: 1,
+        receiver_pin: 1,
+        ins_value: 1,
+        customer_id: 1,
+        contract: 1,
+        value: 1,
+        service: 1,
+        emo_message: 1,
+        user_id: 1,
+        user_name: 1,
+        status: 1,
+        office_id: 1,
+        office_name: 1,
+        event_date: { $dateToString: { format: "%Y-%m-%d", date: "$event_date" } },
+        event_time: 1,
+        ipvs_article_type: 1,
+        bagid: 1,
+        rts: 1,
+        _id: 1,
+        // is_deleted: 1,
+        // is_active: 1,
+        edd: { $dateToString: { format: "%Y-%m-%d", date: "$edd" } },
+        d: 1,
+        remainDays: 1,
+        exceeded_days: 1,
+        color: 1
+      }
+    },
+    // {
+    //   $match: { color: 'red'},
+    // },
+    { $match: r },
+    { $sort: t },
+    {
+      $facet: {
+        total: [{ $count: "createdAt" }],
+        data: [
+          {
+            $skip: l
+          },
+          {
+            $limit: s
+          }
+        ]
+      }
+    },
+    { $unwind: "$total" },
+    {
+      $project: {
+        data: 1,
+        meta: {
+          total: "$total.createdAt",
+          limit: { $literal: s },
+          page: { $literal: l / s + 1 },
+          pages: { $ceil: { $divide: ["$total.createdAt", s] } }
+        }
+      }
+    }
+  ]);
+  let c;
+  u && u.length ? c = u[0] : c = [], a.reply("get-delivery-success", JSON.stringify({ status: !0, data: c }));
+});
+o.on("getExportData", async (a, e) => {
+  let t = e.sort ? e.sort : { createdAt: -1 }, r = {};
+  e.startDate && e.endDate && Object.assign(r, {
+    $and: [
+      {
+        event_date: { $gte: new Date(e.startDate) }
+      },
+      {
+        event_date: { $lte: new Date(e.endDate) }
+      }
+    ]
+  }), e.status !== null && Object.assign(r, { status: e.status }), e.color && Object.assign(r, { color: e.color }), e.search && Object.assign(r, {
+    $or: [
+      {
+        article: {
+          $regex: ".*" + e.search + ".*",
+          $options: "si"
+        }
+      },
+      {
+        book_ofc_name: {
+          $regex: ".*" + e.search + ".*",
+          $options: "si"
+        }
+      }
+    ]
+  }), console.log("this is condition++++++++++==========", r);
+  let s = parseInt(e.limit) || 10, l = (parseInt(e.page) - 1) * s || 0;
+  const u = await _.aggregate([
     // { $sort: sort },
     {
       $lookup: {
@@ -671,17 +803,17 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
     // {
     //   $match: { color: 'red'},
     // },
-    { $match: cond },
-    { $sort: sort },
+    { $match: r },
+    { $sort: t },
     {
       $facet: {
         total: [{ $count: "createdAt" }],
         data: [
           {
-            $skip: skip
+            $skip: l
           },
           {
-            $limit: limit
+            $limit: s
           }
         ]
       }
@@ -692,264 +824,25 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
         data: 1,
         meta: {
           total: "$total.createdAt",
-          limit: { $literal: limit },
-          page: { $literal: skip / limit + 1 },
-          pages: { $ceil: { $divide: ["$total.createdAt", limit] } }
+          limit: { $literal: s },
+          page: { $literal: l / s + 1 },
+          pages: { $ceil: { $divide: ["$total.createdAt", s] } }
         }
       }
     }
   ]);
-  let holdVal;
-  if (allItems && allItems.length) {
-    holdVal = allItems[0];
-  } else {
-    holdVal = [];
-  }
-  event.reply("get-delivery-success", JSON.stringify({ status: true, data: holdVal }));
+  let c;
+  u && u.length ? c = u[0] : c = [], a.reply("get-export-success", JSON.stringify({ status: !0, data: c }));
 });
-ipcMain.on("getExportData", async (event, filter) => {
-  console.log("get delivery data called");
-  console.log(filter);
-  let sort = filter.sort ? filter.sort : { createdAt: -1 };
-  let cond = {};
-  if (filter.startDate && filter.endDate) {
-    Object.assign(cond, {
-      $and: [
-        {
-          "event_date": { $gte: new Date(filter.startDate) }
-        },
-        {
-          "event_date": { $lte: new Date(filter.endDate) }
-        }
-      ]
-    });
-  }
-  if (filter.status !== null) {
-    Object.assign(cond, { status: filter["status"] });
-  }
-  if (filter.color) {
-    Object.assign(cond, { color: filter["color"] });
-  }
-  if (filter.search) {
-    Object.assign(cond, {
-      $or: [
-        {
-          article: {
-            $regex: ".*" + filter.search + ".*",
-            $options: "si"
-          }
-        },
-        {
-          book_ofc_name: {
-            $regex: ".*" + filter.search + ".*",
-            $options: "si"
-          }
-        }
-      ]
-    });
-  }
-  console.log("this is condition++++++++++==========", cond);
-  let limit = parseInt(filter.limit) || 10;
-  let skip = (parseInt(filter.page) - 1) * limit || 0;
-  const allItems = await delivery.aggregate([
-    // { $sort: sort },
-    {
-      $lookup: {
-        from: "masters",
-        // The name of your master collection
-        localField: "book_ofc",
-        foreignField: "facility_id",
-        as: "masterData"
-      }
-    },
-    {
-      $addFields: {
-        masterData: { $arrayElemAt: ["$masterData", 0] }
-        // Extract the first matching document
-      }
-    },
-    {
-      $addFields: {
-        d: { $ifNull: ["$masterData.d2", 3] }
-      }
-    },
-    {
-      $addFields: {
-        edd: {
-          $toDate: {
-            $add: [
-              { $toDate: "$book_date" },
-              { $multiply: [{ $subtract: [{ $toInt: "$d" }, 1] }, 24 * 60 * 60 * 1e3] }
-              // Convert `$d` to a number
-            ]
-          }
-        }
-      }
-    },
-    {
-      $addFields: {
-        remainDays: {
-          $divide: [
-            {
-              $subtract: [
-                { $toLong: "$edd" },
-                { $toLong: { $toDate: "$event_date" } }
-              ]
-            },
-            1e3 * 60 * 60 * 24
-          ]
-        }
-      }
-    },
-    {
-      $addFields: {
-        exceeded_days: {
-          $cond: [{ $lt: ["$remainDays", 0] }, { $abs: "$remainDays" }, 0]
-        }
-      }
-    },
-    {
-      $addFields: {
-        color: {
-          $switch: {
-            branches: [
-              {
-                case: {
-                  $and: [{ $gte: ["$remainDays", 0] }, { $eq: ["$status", "Item Delivered"] }]
-                },
-                then: "green"
-              },
-              {
-                case: {
-                  $and: [{ $lt: ["$remainDays", 0] }, { $gt: ["$remainDays", -2] }, { $ne: ["$status", "Item Delivered"] }]
-                },
-                then: "orange"
-              },
-              {
-                case: {
-                  $and: [{ $lt: ["$remainDays", -1] }, { $ne: ["$status", "Item Delivered"] }]
-                },
-                then: "red"
-              },
-              {
-                case: {
-                  $and: [{ $lte: ["$remainDays", 0] }, { $ne: ["$dest_ofc_id", "$office_id"] }, { $ne: ["$status", "Item Delivered"] }]
-                },
-                then: "yellow"
-              }
-            ],
-            default: ""
-          }
-        }
-      }
-    },
-    {
-      $project: {
-        article: 1,
-        booking: 1,
-        track: 1,
-        cod: 1,
-        book_ofc: 1,
-        book_ofc_name: 1,
-        dest_ofc_id: 1,
-        dest_ofc_name: 1,
-        book_id: 1,
-        article_type: 1,
-        weight: 1,
-        book_date: 1,
-        book_time: 1,
-        tariff: 1,
-        prepaid_value: 1,
-        sender_name: 1,
-        sender_city: 1,
-        sender_mobile: 1,
-        receiver_name: 1,
-        recevier_addr1: 1,
-        recevier_addr2: 1,
-        recevier_addr3: 1,
-        receiver_city: 1,
-        receiver_phone: 1,
-        receiver_pin: 1,
-        ins_value: 1,
-        customer_id: 1,
-        contract: 1,
-        value: 1,
-        service: 1,
-        emo_message: 1,
-        user_id: 1,
-        user_name: 1,
-        status: 1,
-        office_id: 1,
-        office_name: 1,
-        event_date: { $dateToString: { format: "%Y-%m-%d", date: "$event_date" } },
-        event_time: 1,
-        ipvs_article_type: 1,
-        bagid: 1,
-        rts: 1,
-        _id: 1,
-        // is_deleted: 1,
-        // is_active: 1,
-        edd: { $dateToString: { format: "%Y-%m-%d", date: "$edd" } },
-        d: 1,
-        remainDays: 1,
-        exceeded_days: 1,
-        color: 1
-      }
-    },
-    // {
-    //   $match: { color: 'red'},
-    // },
-    { $match: cond },
-    { $sort: sort },
-    {
-      $facet: {
-        total: [{ $count: "createdAt" }],
-        data: [
-          {
-            $skip: skip
-          },
-          {
-            $limit: limit
-          }
-        ]
-      }
-    },
-    { $unwind: "$total" },
-    {
-      $project: {
-        data: 1,
-        meta: {
-          total: "$total.createdAt",
-          limit: { $literal: limit },
-          page: { $literal: skip / limit + 1 },
-          pages: { $ceil: { $divide: ["$total.createdAt", limit] } }
-        }
-      }
-    }
-  ]);
-  let holdVal;
-  if (allItems && allItems.length) {
-    holdVal = allItems[0];
-  } else {
-    holdVal = [];
-  }
-  event.reply("get-export-success", JSON.stringify({ status: true, data: holdVal }));
-});
-ipcMain.handle("save-file", async (event, data) => {
-  const { canceled, filePath } = await dialog.showSaveDialog({
+o.handle("save-file", async (a, e) => {
+  const { canceled: t, filePath: r } = await I.showSaveDialog({
     defaultPath: "data.json",
     filters: [{ name: "JSON Files", extensions: ["json"] }]
   });
-  if (!canceled && filePath) {
-    fs.writeFileSync(filePath, data);
-    return { success: true };
-  } else {
-    return { success: false };
-  }
+  return !t && r ? (N.writeFileSync(r, e), { success: !0 }) : { success: !1 };
 });
 export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL
+  C as MAIN_DIST,
+  D as RENDERER_DIST,
+  $ as VITE_DEV_SERVER_URL
 };
-//# sourceMappingURL=index.js.map

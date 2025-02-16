@@ -54,13 +54,12 @@ function Master() {
       // console.log("status", status);
       // console.log("data", data);
       message.success("Details inserted.");
-      // navigate(0);
+      navigate('/master-table');
 
       if (status == true) {
         message.success("Details inserted.");
       } else {
       message.error("Something went wrong while saving data.");
-      // message.error(JSON.stringify(data));
       }
 
     });
@@ -151,6 +150,7 @@ function Master() {
         return;
       }
 
+      // console.log("keys keys ", keys);
       const dupliExist = hasDuplicates(keys);
       if (dupliExist === true) {
         message.error("File contain duplicat header.");

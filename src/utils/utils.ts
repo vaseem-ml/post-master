@@ -282,6 +282,7 @@ export const colorFilter = [
   'orange',
   'red',
   'yellow',
+  'purple'
 ]
 
 export const colorFilterOpt = [
@@ -289,4 +290,5 @@ export const colorFilterOpt = [
   { label: "orange", value: "orange" },
   { label: "red", value: "red" },
   { label: "yellow", value: "yellow" },
+  { label: "purple", value: "purple" },
 ]

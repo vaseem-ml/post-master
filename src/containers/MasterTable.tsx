@@ -28,8 +28,8 @@ const MasterTable = () => {
 
     window.getMasterData.receiveMessage((response: any) => {
       const { status, data } = JSON.parse(response);
-      console.log("status", status);
-      console.log("data", data);
+      // console.log("status", status);
+      // console.log("data", data);
       if (status == true) {
         // message.success("Master data fetched.");
         setRowData(data?.data);

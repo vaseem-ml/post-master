@@ -174,6 +174,20 @@ contextBridge.exposeInMainWorld('getDeliveryData', {
   },
 });
 
+contextBridge.exposeInMainWorld('getStatisticsData', {
+  getData: async (payload: any, url: string) => {
+    ipcRenderer.send('getStatisticsData', payload);
+  },
+  receiveMessage: (callback: any) => {
+    ipcRenderer.on('get-statistic-success', (event, response) => {
+      callback(response);
+    });
+    ipcRenderer.on('get-statistic-error', (event, response) => {
+      callback(response);
+    });
+  },
+});
+
 contextBridge.exposeInMainWorld('getExportData', {
   getData: async (payload: any, url: string) => {
     ipcRenderer.send('getExportData', payload);
