@@ -369,29 +369,143 @@ ipcMain.on('updateDelivery', async (event, filter) => {
 
 });
 
-
 ipcMain.on('getStatisticsData', async (event, filter) => {
+  try {
+    const statisticsData = await delivery.aggregate([
+      {
+        $lookup: {
+          from: 'masters',
+          localField: 'dest_ofc_id',
+          foreignField: 'facility_id',
+          as: 'masterData',
+        },
+      },
+      {
+        $addFields: {
+          masterData: { $arrayElemAt: ['$masterData', 0] },
+        },
+      },
+      {
+        $addFields: {
+          d: {
+            $cond: {
+              if: { $isArray: '$masterData.d2' },
+              then: { $arrayElemAt: ['$masterData.d2', 0] },
+              else: '$masterData.d2',
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          d: { $ifNull: ['$d', 3] }, // Default value if `d` is null
+        },
+      },
+      {
+        $addFields: {
+          edd: {
+            $toDate: {
+              $add: [
+                { $toDate: '$book_date' },
+                { $multiply: [{ $subtract: [{ $toInt: '$d' }, 1] }, 24 * 60 * 60 * 1000] },
+              ],
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          remainDays: {
+            $divide: [
+              { $subtract: [{ $toLong: '$edd' }, { $toLong: { $toDate: '$event_date' } }] },
+              1000 * 60 * 60 * 24,
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          exceeded_days: {
+            $cond: [{ $lt: ['$remainDays', 0] }, { $abs: '$remainDays' }, 0],
+          },
+        },
+      },
+      {
+        $addFields: {
+          color: {
+            $switch: {
+              branches: [
+                {
+                  case: { $and: [{ $gte: ['$remainDays', 0] }, { $eq: ['$status', 'Item Delivered'] }] },
+                  then: 'green',
+                },
+                {
+                  case: { $and: [{ $lt: ['$remainDays', 0] }, { $gt: ['$remainDays', -2] }, { $ne: ['$status', 'Item Delivered'] }] },
+                  then: 'orange',
+                },
+                {
+                  case: { $and: [{ $lt: ['$remainDays', -1] }, { $ne: ['$status', 'Item Delivered'] }] },
+                  then: 'red',
+                },
+                {
+                  case: { $and: [{ $lte: ['$remainDays', 0] }, { $ne: ['$dest_ofc_id', '$office_id'] }, { $ne: ['$status', 'Item Delivered'] }] },
+                  then: 'yellow',
+                },
+                {
+                  case: {
+                    $and: [
+                      { $eq: ['$status', 'Item Delivered'] },
+                      { $gt: [{ $toDate: '$event_date' }, { $toDate: '$edd' }] },
+                    ],
+                  },
+                  then: 'purple',
+                },
+              ],
+              default: '',
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          green: { $sum: { $cond: [{ $eq: ['$color', 'green'] }, 1, 0] } },
+          orange: { $sum: { $cond: [{ $eq: ['$color', 'orange'] }, 1, 0] } },
+          red: { $sum: { $cond: [{ $eq: ['$color', 'red'] }, 1, 0] } },
+          yellow: { $sum: { $cond: [{ $eq: ['$color', 'yellow'] }, 1, 0] } },
+          purple: { $sum: { $cond: [{ $eq: ['$color', 'purple'] }, 1, 0] } }, 
+          itemDelivered: { $sum: { $cond: [{ $eq: ['$status', 'Item Delivered'] }, 1, 0] } },
+          itemBooked: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          green: 1,
+          orange: 1,
+          red: 1,
+          yellow: 1,
+          purple: 1,
+          itemDelivered: 1,
+          itemBooked: 1,
+        },
+      },
+    ]);
 
-  // try {
-  //   const result = await delivery.updateOne({ article: filter?.article }, { status: filter?.status });
-  //   event.reply('get-statistic-success', JSON.stringify({ status: true, data: result }));
-  // } catch (error: any) {
-  //   console.log('error+++++++++======', error);
-  //   event.reply('get-statistic-error', JSON.stringify({ status: false, data: error }));
-  // }
+    const data = statisticsData.length > 0 ? statisticsData[0] : {
+      green: 0,
+      orange: 0,
+      red: 0,
+      yellow: 0,
+      itemDelivered: 0,
+      itemBooked: 0,
+    };
 
-  const data = {
-    orange: 4,
-    green: 4,
-    red: 4,
-    yellow: 4,
-    purple: 4,
-    itemDelivered: 4,
-    itemBooked: 4
+    event.reply('get-statistic-success', JSON.stringify({ status: true, data }));
+  } catch (error: any) {
+    console.error('Aggregation Error:', error);
+    event.reply('get-statistic-error', JSON.stringify({ status: false, data: error.message }));
   }
-  event.reply('get-statistic-success', JSON.stringify({ status: true, data: data }));
-
-
 });
 
 ipcMain.on('getDeliveryData', async (event, filter) => {
@@ -454,13 +568,16 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
 
 
-  if (filter.status !== null) {
-    Object.assign(cond, { status: filter['status'] })
-    // Object.assign(cond, { color: filter['status']})
+  if (filter.status) {
+    const statusArray = Array.isArray(filter.status) ? filter.status : [filter.status];
+    Object.assign(cond, { status: { $in: statusArray } });
   }
+  
 
-  if(filter.color) {
-    Object.assign(cond, { color: filter['color']})
+  console.log('this is color++++++++++=', filter.color)
+  if (filter.color) {
+    const colorArray = Array.isArray(filter.color) ? filter.color : [filter.color];
+    Object.assign(cond, { color: { $in: colorArray } });
   }
 
 
@@ -575,6 +692,15 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
                   $and: [{ $lte: ['$remainDays', 0] },  { $ne: ['$dest_ofc_id', '$office_id'] }, { $ne: ['$status', 'Item Delivered'] }],
                 },
                 then: 'yellow',
+              },
+              {
+                case: {
+                  $and: [
+                    { $eq: ['$status', 'Item Delivered'] },
+                    { $gt: [{ $toDate: '$event_date' }, { $toDate: '$edd' }] },
+                  ],
+                },
+                then: 'purple',
               },
             ],
             default: '',
