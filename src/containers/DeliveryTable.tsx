@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import { Pagination, message, Button, Spin, Table, Select, DatePicker, Modal, Input, Tag } from 'antd';
-import { EyeOutlined, EditOutlined, DeleteOutlined, ExclamationCircleFilled } from '@ant-design/icons';
-import { saveAs } from 'file-saver';
-import Papa from 'papaparse';
+import { EyeOutlined, EditOutlined, ExclamationCircleFilled, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
-import { deliveryStatusDropOpt, deliveryStatusUi, colorFilterOpt } from '../utils/utils';
-import { useEffectOnce } from '../components/update/useonc'
+import { saveAs } from 'file-saver';
+import Papa from 'papaparse';
+
+import { deliveryStatusDropOpt, colorFilterOpt, deliveryStatusUi } from '../utils/utils';
+import { useEffectOnce } from '../components/update/useonc';
 import { isEmpty } from 'lodash';
-import type { TableColumnsType, TableProps } from 'antd';
+import type { TableProps, TableColumnsType } from 'antd';
 type TableRowSelection<T extends object = object> = TableProps<T>['rowSelection'];
 
 const TAG = "DeliveryTable: ";
@@ -151,7 +152,7 @@ const DeliveryTable = () => {
       Object.assign(queryTable, { sort: { [sortField]: sortOrder === "asc" ? 1 : -1 } })
     }
 
-    console.log(TAG + "queryTable", queryTable);
+    console.log(TAG + " queryTable ", queryTable);
 
     await window.getDeliveryData.getData(queryTable, "dummyurl");
 
@@ -213,7 +214,7 @@ const DeliveryTable = () => {
       Object.assign(queryTable, { sort: { [sortField]: sortOrder === "asc" ? 1 : -1 } })
     }
 
-    // console.log(TAG + "queryTable", queryTable);
+    console.log(TAG + " queryTable for export ", queryTable);
 
     try {
       await window.getExportData.getData(queryTable, "dummyurl");
@@ -477,7 +478,7 @@ const DeliveryTable = () => {
   };
 
 
-  console.log(TAG + " stats  ", stats);
+  // console.log(TAG + " stats  ", stats);
   // console.log(TAG + " rowMeta ", rowMeta);
   // console.log(TAG + " rowData ", rowData);
   // console.log(TAG + " statusFilter ", statusFilter);
