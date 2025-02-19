@@ -865,11 +865,14 @@ ipcMain.on("getExportData", async (event, filter) => {
       ]
     });
   }
-  if (filter.status !== null) {
-    Object.assign(cond, { status: filter["status"] });
+  if (filter.status) {
+    const statusArray = Array.isArray(filter.status) ? filter.status : [filter.status];
+    Object.assign(cond, { status: { $in: statusArray } });
   }
+  console.log("this is color++++++++++=", filter.color);
   if (filter.color) {
-    Object.assign(cond, { color: filter["color"] });
+    const colorArray = Array.isArray(filter.color) ? filter.color : [filter.color];
+    Object.assign(cond, { color: { $in: colorArray } });
   }
   if (filter.search) {
     Object.assign(cond, {
@@ -889,7 +892,6 @@ ipcMain.on("getExportData", async (event, filter) => {
       ]
     });
   }
-  console.log("this is condition++++++++++==========", cond);
   let limit = parseInt(filter.limit) || 10;
   let skip = (parseInt(filter.page) - 1) * limit || 0;
   const allItems = await delivery.aggregate([
@@ -898,7 +900,7 @@ ipcMain.on("getExportData", async (event, filter) => {
       $lookup: {
         from: "masters",
         // The name of your master collection
-        localField: "book_ofc",
+        localField: "dest_ofc_id",
         foreignField: "facility_id",
         as: "masterData"
       }
@@ -977,6 +979,15 @@ ipcMain.on("getExportData", async (event, filter) => {
                   $and: [{ $lte: ["$remainDays", 0] }, { $ne: ["$dest_ofc_id", "$office_id"] }, { $ne: ["$status", "Item Delivered"] }]
                 },
                 then: "yellow"
+              },
+              {
+                case: {
+                  $and: [
+                    { $eq: ["$status", "Item Delivered"] },
+                    { $gt: [{ $toDate: "$event_date" }, { $toDate: "$edd" }] }
+                  ]
+                },
+                then: "purple"
               }
             ],
             default: ""

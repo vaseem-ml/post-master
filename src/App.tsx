@@ -21,6 +21,7 @@ import './index.css';
 
 import logoimg from './assets/logo.svg';
 
+const TAG: string = "App";
 const App = () => {
 
   useEffect(() => {
@@ -34,6 +35,7 @@ const App = () => {
 
     window.getExportData.receiveMessage(async (response: any) => {
       const { status, data } = JSON.parse(response);
+      console.log(TAG + " data got for export ", data);
       if (status == true) {
         message.success("Delivery data fetched.");
         try {
@@ -57,7 +59,7 @@ const App = () => {
   return (
     <Router>
       <div className="min-h-screen flex">
-        <nav className="w-[200px] bg-gray-800 text-white flex flex-col">
+        <nav className="w-[200px] bg-gray-800 text-white flex flex-col flex-shrink-0 ">
           <div className="flex items-center justify-center p-4">
             <img src={logoimg} alt="Logo" className="h-12 w-12" />
           </div>

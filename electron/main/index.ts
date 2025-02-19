@@ -865,7 +865,6 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
 
 ipcMain.on('getExportData', async (event, filter) => {
 
-  // console.log("get delivery data called");
   // console.log(filter);
 
   // let cond = { company: Mongoose.Types.ObjectId(filter.company) }
@@ -923,13 +922,16 @@ ipcMain.on('getExportData', async (event, filter) => {
 
 
 
-  if (filter.status !== null) {
-    Object.assign(cond, { status: filter['status'] })
-    // Object.assign(cond, { color: filter['status']})
+  if (filter.status) {
+    const statusArray = Array.isArray(filter.status) ? filter.status : [filter.status];
+    Object.assign(cond, { status: { $in: statusArray } });
   }
+  
 
-  if(filter.color) {
-    Object.assign(cond, { color: filter['color']})
+  console.log('this is color++++++++++=', filter.color)
+  if (filter.color) {
+    const colorArray = Array.isArray(filter.color) ? filter.color : [filter.color];
+    Object.assign(cond, { color: { $in: colorArray } });
   }
 
 
@@ -952,7 +954,7 @@ ipcMain.on('getExportData', async (event, filter) => {
     });
   }
 
-  console.log("this is condition++++++++++==========", cond)
+  // console.log("this is condition++++++++++==========", cond)
 
 
 
@@ -965,7 +967,7 @@ ipcMain.on('getExportData', async (event, filter) => {
     {
       $lookup: {
         from: 'masters', // The name of your master collection
-        localField: 'book_ofc',
+        localField: 'dest_ofc_id',
         foreignField: 'facility_id',
         as: 'masterData',
       },
@@ -1044,6 +1046,15 @@ ipcMain.on('getExportData', async (event, filter) => {
                   $and: [{ $lte: ['$remainDays', 0] },  { $ne: ['$dest_ofc_id', '$office_id'] }, { $ne: ['$status', 'Item Delivered'] }],
                 },
                 then: 'yellow',
+              },
+              {
+                case: {
+                  $and: [
+                    { $eq: ['$status', 'Item Delivered'] },
+                    { $gt: [{ $toDate: '$event_date' }, { $toDate: '$edd' }] },
+                  ],
+                },
+                then: 'purple',
               },
             ],
             default: '',
