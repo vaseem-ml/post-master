@@ -37,11 +37,15 @@ const App = () => {
       const { status, data } = JSON.parse(response);
       console.log(TAG + " data got for export ", data);
       if (status == true) {
-        message.success("Delivery data fetched.");
         try {
-          const csv = Papa.unparse(data?.data);
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-          saveAs(blob, `delivery_data_${Date.now()}.csv`);
+          if( data?.data?.length > 0 ){
+            message.success("Delivery data fetched.");
+            const csv = Papa.unparse(data?.data);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            saveAs(blob, `delivery_data_${Date.now()}.csv`);
+          } else {
+            message.error("No data to exports.");
+          }
         }
         catch (error) {
           message.error("Something went wrong while generating csv.");
