@@ -610,9 +610,11 @@ ipcMain.on("getStatisticsData", async (event, filter) => {
 });
 ipcMain.on("getDeliveryData", async (event, filter) => {
   console.log("get delivery data called");
+  console.log(filter);
   let sort = filter.sort ? filter.sort : { createdAt: -1 };
   let cond = {};
   if (filter.startDate && filter.endDate) {
+    console.log("condition running for start date and end date");
     Object.assign(cond, {
       $and: [
         {
@@ -624,11 +626,11 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
       ]
     });
   }
+  console.log("now condition+++++++++=", cond);
   if (filter.status) {
     const statusArray = Array.isArray(filter.status) ? filter.status : [filter.status];
     Object.assign(cond, { status: { $in: statusArray } });
   }
-  console.log("this is color++++++++++=", filter.color);
   if (filter.color) {
     const colorArray = Array.isArray(filter.color) ? filter.color : [filter.color];
     Object.assign(cond, { color: { $in: colorArray } });
@@ -651,6 +653,7 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
       ]
     });
   }
+  console.log("this is condition++++++++++==========", cond);
   let limit = parseInt(filter.limit) || 10;
   let skip = (parseInt(filter.page) - 1) * limit || 0;
   const allItems = await delivery.aggregate([
@@ -792,7 +795,8 @@ ipcMain.on("getDeliveryData", async (event, filter) => {
         status: 1,
         office_id: 1,
         office_name: 1,
-        event_date: { $dateToString: { format: "%Y-%m-%d", date: "$event_date" } },
+        // event_date: { $dateToString: { format: "%Y-%m-%d", date: "$event_date" } },
+        event_date: 1,
         event_time: 1,
         ipvs_article_type: 1,
         bagid: 1,

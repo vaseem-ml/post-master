@@ -511,7 +511,7 @@ ipcMain.on('getStatisticsData', async (event, filter) => {
 ipcMain.on('getDeliveryData', async (event, filter) => {
 
   console.log("get delivery data called");
-  // console.log(filter);
+  console.log(filter);
 
   // let cond = { company: Mongoose.Types.ObjectId(filter.company) }
   // let cond = {};
@@ -554,6 +554,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
   let cond: any = {}
 
   if (filter.startDate && filter.endDate) {
+    console.log('condition running for start date and end date')
     Object.assign(cond, {
       $and: [
         {
@@ -566,6 +567,8 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     })
   }
 
+  console.log('now condition+++++++++=', cond)
+
 
 
   if (filter.status) {
@@ -574,7 +577,6 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
   }
   
 
-  console.log('this is color++++++++++=', filter.color)
   if (filter.color) {
     const colorArray = Array.isArray(filter.color) ? filter.color : [filter.color];
     Object.assign(cond, { color: { $in: colorArray } });
@@ -600,7 +602,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     });
   }
 
-  // console.log("this is condition++++++++++==========", cond)
+  console.log("this is condition++++++++++==========", cond)
 
 
 
@@ -747,7 +749,8 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
         status: 1,
         office_id: 1,
         office_name: 1,
-        event_date: { $dateToString: { format: "%Y-%m-%d", date: "$event_date" } },
+        // event_date: { $dateToString: { format: "%Y-%m-%d", date: "$event_date" } },
+        event_date: 1,
         event_time: 1,
         ipvs_article_type: 1,
         bagid: 1,
@@ -767,6 +770,7 @@ ipcMain.on('getDeliveryData', async (event, filter) => {
     // },
     { $match: cond },
     { $sort: sort },
+    
     {
 
       $facet: {
